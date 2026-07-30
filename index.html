@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>赤ちゃんミルク記録</title>
+    <style>
+        :root {
+            --primary-color: #6da5c0;
+            --bg-color: #f7f9fa;
+            --card-bg: #ffffff;
+            --text-color: #2c3e50;
+            --accent-color: #ff8b8b;
+            --border-color: #e2e8f0;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: var(--bg-color); color: var(--text-color); padding: 15px; }
+        .container { max-width: 500px; margin: 0 auto; }
+        h2 { text-align: center; margin-bottom: 15px; font-size: 1.2rem; }
+        .card { background: var(--card-bg); border-radius: 16px; padding: 20px; margin-bottom: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .timer-box { text-align: center; background: #eef7f9; border-radius: 12px; padding: 12px; margin-bottom: 20px; border-left: 5px solid var(--primary-color); }
+        .timer-box span { font-weight: bold; color: var(--primary-color); font-size: 1.25rem; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 6px; font-weight: bold; font-size: 0.9rem; }
+        input[type="datetime-local"] { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 1rem; }
+        select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 1rem; }
+        .btn { display: block; width: 100%; padding: 14px; background: var(--primary-color); color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; text-align: center; margin-top: 15px; }
+        .btn-danger { background: var(--accent-color); }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .stat-card { background: #fff; padding: 12px; border-radius: 12px; text-align: center; border: 1px solid var(--border-color); box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .stat-val { font-size: 1.2rem; font-weight: bold; color: var(--primary-color); margin-top: 5px; }
+        .filter-box { display: flex; gap: 8px; align-items: center; margin-bottom: 15px; }
+        .filter-box select { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 0.9rem; }
+        .filter-box .btn { width: auto; padding: 10px 15px; margin-top: 0; }
+        .history-list { max-height: 350px; overflow-y: auto; }
+        .history-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid var(--border-color); }
+        .history-info { display: flex; flex-direction: column; }
+        .history-time { font-weight: bold; font-size: 1.1rem; }
+        .history-date { font-size: 0.75rem; color: #7f8c8d; }
+        .history-amount { font-weight: bold; color: var(--primary-color); font-size: 1.1rem; }
+        .history-actions button { background: none; border: none; margin-left: 10px; cursor: pointer; font-size: 1.1rem; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; padding: 15px; z-index: 1000; }
+        .modal-content { background: white; padding: 20px; border-radius: 16px; width: 100%; max-width: 400px; }
+        .modal-buttons { display: flex; gap: 10px; margin-top: 15px; }
+        .modal-buttons .btn { margin-top: 0; }
+        .tabs { display: flex; margin-bottom: 15px; background: #e2e8f0; padding: 4px; border-radius: 8px; }
+        .tab { flex: 1; text-align: center; padding: 10px; cursor: pointer; border-radius: 6px; font-weight: bold; font-size: 0.9rem; }
+        .tab.active { background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .page { display: none; }
+        .page.active { display: block; }
+        .loading { text-align: center; padding: 20px; color: #7f8c8d; }
+        .legend-item { display: flex; align-items: center; gap: 4px; }
+        .legend-swatch { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+        .chart-mode-toggle { display: flex; gap: 8px; margin-bottom: 12px; }
+        .mode-btn { flex: 1; padding: 8px; border-radius: 8px; border: 1px solid var(--border-color); background: #f0f4f8; font-size: 0.85rem; font-weight: bold; cursor: pointer; }
+        .mode-btn.active { background: var(--primary-color); color: white; border-color: var(--primary-color); }
+        .day-detail-list { max-height: 300px; overflow-y: auto; margin: 10px 0; }
+        .day-detail-total { text-align: center; font-size: 0.9rem; color: #7f8c8d; margin-bottom: 10px; }
+        .day-detail-empty { text-align: center; padding: 20px; color: #7f8c8d; }
+        .memo-date-header { font-weight: bold; font-size: 0.85rem; color: #7f8c8d; margin: 14px 0 6px; padding-bottom: 4px; border-bottom: 1px solid var(--border-color); }
+        .memo-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 4px; border-bottom: 1px solid var(--border-color); }
+        .memo-checkbox-label input { width: 20px; height: 20px; margin-top: 2px; }
+        .memo-content { flex: 1; font-size: 0.95rem; line-height: 1.4; }
+        .memo-transcribed .memo-content { text-decoration: line-through; color: #b0b8bd; }
+        .memo-actions button { background: none; border: none; cursor: pointer; font-size: 1.05rem; }
+
+        /* ===== ★追加：ログイン画面・上部ユーザーバー ===== */
+        #login-screen {
+            max-width: 500px; margin: 60px auto 0; text-align: center;
+        }
+        #login-screen .card { padding: 32px 24px; }
+        #login-screen p { color: #7f8c8d; font-size: 0.9rem; margin-bottom: 20px; }
+        .btn-google {
+            width: 100%; background: #fff; border: 1px solid var(--border-color); color: var(--text-color);
+            display: flex; align-items: center; justify-content: center; gap: 10px; padding: 12px;
+            border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer;
+        }
+        .btn-google:hover { background: #f2f3f5; }
+        #topbar {
+            display: flex; align-items: center; gap: 8px; max-width: 500px; margin: 0 auto 10px;
+            background: white; border-radius: 12px; padding: 8px 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        #topbar img { width: 28px; height: 28px; border-radius: 50%; }
+        #topbar .topbar-name { font-size: 0.85rem; font-weight: bold; }
+        #topbar .btn-logout {
+            margin-left: auto; background: none; border: none; color: #7f8c8d; font-size: 0.8rem; cursor: pointer;
+        }
+        #denied-screen { max-width: 500px; margin: 60px auto 0; text-align: center; }
+        #denied-screen .card { padding: 32px 24px; }
+        .hidden { display: none !important; }
+    </style>
+    <!-- ファビコン -->
+<link rel="icon" type="image/png" href="icon.png">
+
+<!-- iOSのホーム画面追加用 -->
+<link rel="apple-touch-icon" href="icon.png">
+
+<!-- Android/PWA用 -->
+<link rel="manifest" href="manifest.json">
+
+<!-- ステータスバー等のテーマカラー -->
+<meta name="theme-color" content="#6da5c0">
+
+<!-- iOSで「ホーム画面に追加」した際、Safariのアドレスバーなどを隠してアプリらしく開く -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ミルク記録">
+
+</head>
+<body>
+
+<!-- ===== ★追加：ログイン画面 ===== -->
+<div id="login-screen">
+    <div class="card">
+        <h2>🍼 赤ちゃんミルク記録</h2>
+        <p>ご家族のGoogleアカウントでログインしてください</p>
+        <button class="btn-google" id="login-btn">
+            <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.9 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 8 3l6-6C34.1 5.1 29.3 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21 21-9.4 21-21c0-1.4-.1-2.7-.4-4z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 18.9 12 24 12c3.1 0 5.8 1.1 8 3l6-6C34.1 5.1 29.3 3 24 3 16.1 3 9.1 7.4 6.3 14.7z"/><path fill="#4CAF50" d="M24 45c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 36 26.7 37 24 37c-5.3 0-9.7-3.4-11.3-8.1l-6.6 5.1C9 40.5 16 45 24 45z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.2 5.6l6.2 5.2C40.5 36.1 45 30.6 45 24c0-1.4-.1-2.7-.4-3.5z"/></svg>
+            Googleでログイン
+        </button>
+    </div>
+</div>
+
+<!-- ===== ★追加：アクセス権なし画面 ===== -->
+<div id="denied-screen" class="hidden">
+    <div class="card">
+        <h2>⚠️ アクセス権がありません</h2>
+        <p style="margin-top:10px;">このアプリは登録されたご家族のみご利用いただけます。</p>
+        <button class="btn" id="denied-logout-btn" style="background:#95a5a6;">別のアカウントでログイン</button>
+    </div>
+</div>
+
+<!-- ===== ★追加：上部ユーザーバー ===== -->
+<div id="topbar" class="hidden">
+    <img id="topbar-photo" src="" alt="">
+    <span class="topbar-name" id="topbar-name"></span>
+    <button class="btn-logout" id="topbar-logout-btn">ログアウト</button>
+</div>
+
+<div class="container hidden" id="main-container">
+    <div class="tabs">
+        <div class="tab active" onclick="switchTab('record')">記録入力</div>
+        <div class="tab" onclick="switchTab('history')">履歴・分析</div>
+        <div class="tab" onclick="switchTab('memo')">育児メモ</div>
+    </div>
+
+    <div id="page-record" class="page active">
+        <div class="card">
+            <div class="timer-box">
+                🍼 前回のミルクから <span id="elapsed-time">計算中...</span> 経過<br>
+                <span style="font-size:0.85rem; color:#7f8c8d;">前回の量: <span id="last-amount">-</span></span>
+            </div>
+            <h2>ミルク記録</h2>
+            <div class="form-group">
+                <label for="record-time">あげた日時（自動で現在時刻）</label>
+                <input type="datetime-local" id="record-time">
+            </div>
+            <div class="form-group">
+                <label for="record-amount">量 (ml)</label>
+                <select id="record-amount"></select>
+            </div>
+            <div class="form-group">
+                <label for="record-memo">メモ</label>
+                <input type="text" id="record-memo" placeholder="少し残した、など" style="width:100%; padding:12px; border-radius:8px; border:1px solid var(--border-color); font-size:1rem;">
+            </div>
+            <button class="btn" onclick="submitRecord()">この内容で登録</button>
+        </div>
+    </div>
+
+    <div id="page-history" class="page">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <label>期間内 1日平均量</label>
+                <div class="stat-val" id="stat-avg-amount">- ml</div>
+            </div>
+            <div class="stat-card">
+                <label>平均間隔</label>
+                <div class="stat-val" id="stat-avg-interval">-</div>
+            </div>
+        </div>
+        <div class="card">
+            <h2>直近7日間のミルク量</h2>
+            <div class="chart-mode-toggle">
+                <button id="mode-btn-session" class="mode-btn active" onclick="setChartMode('session')">回数ごと</button>
+                <button id="mode-btn-time" class="mode-btn" onclick="setChartMode('timeofday')">時間帯ごと</button>
+            </div>
+            <div id="weekly-chart"></div>
+            <div id="weekly-chart-legend" style="display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; font-size:0.8rem;"></div>
+            <div style="text-align:center; font-size:0.75rem; color:#7f8c8d; margin-top:8px;">棒をタップするとその日の詳細が見られます</div>
+        </div>
+        <div class="card">
+            <h2>履歴一覧</h2>
+            <div class="filter-box">
+                <select id="period-filter" onchange="renderHistory()">
+                    <option value="7" selected>直近1週間</option>
+                    <option value="3">直近3日間</option>
+                    <option value="14">直近2週間</option>
+                    <option value="30">直近1ヶ月</option>
+                </select>
+                <button class="btn" onclick="openAddModal()">＋過去分追加</button>
+            </div>
+            <div id="loading-history" class="loading" style="display:none;">読み込み中...</div>
+            <div class="history-list" id="history-container"></div>
+        </div>
+    </div>
+    <div id="page-memo" class="page">
+        <div class="card">
+            <h2>育児メモを追加</h2>
+            <div class="form-group">
+                <label for="memo-date">気づいた日</label>
+                <input type="date" id="memo-date">
+            </div>
+            <div class="form-group">
+                <label for="memo-content">内容</label>
+                <input type="text" id="memo-content" placeholder="例：追視するようになった" style="width:100%; padding:12px; border-radius:8px; border:1px solid var(--border-color); font-size:1rem;">
+            </div>
+            <button class="btn" id="memo-submit-btn" onclick="submitMemo()">メモを登録</button>
+        </div>
+        <div class="card">
+            <h2>メモ一覧（母子手帳への転記用）</h2>
+            <div class="chart-mode-toggle">
+                <button id="memo-filter-untranscribed" class="mode-btn active" onclick="setMemoFilter('untranscribed')">未転記のみ</button>
+                <button id="memo-filter-all" class="mode-btn" onclick="setMemoFilter('all')">すべて</button>
+            </div>
+            <div id="memo-list-container"></div>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="edit-modal">
+    <div class="modal-content">
+        <h2 id="modal-title">記録の編集</h2>
+        <input type="hidden" id="edit-id">
+        <div class="form-group">
+            <label for="edit-time">日時</label>
+            <input type="datetime-local" id="edit-time">
+        </div>
+        <div class="form-group">
+            <label for="edit-amount">量 (ml)</label>
+            <select id="edit-amount"></select>
+        </div>
+        <div class="form-group">
+            <label for="edit-memo">メモ</label>
+            <input type="text" id="edit-memo" style="width:100%; padding:12px; border-radius:8px; border:1px solid var(--border-color); font-size:1rem;">
+        </div>
+        <button class="btn" onclick="saveEdit()">保存する</button>
+        <div class="modal-buttons">
+            <button class="btn btn-danger" id="delete-btn" onclick="deleteRecord()" style="flex:1;">削除</button>
+            <button class="btn" onclick="closeModal()" style="flex:1; background:#95a5a6;">閉じる</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="day-detail-modal">
+    <div class="modal-content">
+        <h2 id="day-detail-title">日別詳細</h2>
+        <div class="day-detail-total" id="day-detail-total"></div>
+        <div class="day-detail-list" id="day-detail-list"></div>
+        <button class="btn" onclick="closeDayDetailModal()" style="background:#95a5a6;">閉じる</button>
+    </div>
+</div>
+<div class="modal" id="memo-edit-modal">
+    <div class="modal-content">
+        <h2>メモの編集</h2>
+        <input type="hidden" id="memo-edit-id">
+        <div class="form-group">
+            <label for="memo-edit-date">気づいた日</label>
+            <input type="date" id="memo-edit-date">
+        </div>
+        <div class="form-group">
+            <label for="memo-edit-content">内容</label>
+            <input type="text" id="memo-edit-content" style="width:100%; padding:12px; border-radius:8px; border:1px solid var(--border-color); font-size:1rem;">
+        </div>
+        <button class="btn" onclick="saveMemoEdit()">保存する</button>
+        <div class="modal-buttons">
+            <button class="btn btn-danger" onclick="deleteMemoConfirm()" style="flex:1;">削除</button>
+            <button class="btn" onclick="closeMemoEditModal()" style="flex:1; background:#95a5a6;">閉じる</button>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    // ==========================================================
+    // Firebase設定・初期化
+    // ==========================================================
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+    import {
+        getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
+    import {
+        getFirestore, collection, addDoc, doc, setDoc, deleteDoc, onSnapshot
+    } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyCLR8rqpr_yoBj_WZJ50c-4VF40DRT0ZgM",
+        authDomain: "milk-log-app-d72e5.firebaseapp.com",
+        projectId: "milk-log-app-d72e5",
+        storageBucket: "milk-log-app-d72e5.firebasestorage.app",
+        messagingSenderId: "343799422939",
+        appId: "1:343799422939:web:ad563b56d199b15c84d1fe"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
+    const recordsCol = collection(db, 'records');
+
+    let unsubscribeSnapshot = null;
+
+    // ==========================================================
+    // ログイン画面まわり
+    // ==========================================================
+    document.getElementById('login-btn').addEventListener('click', async () => {
+        try {
+            await signInWithPopup(auth, provider);
+        } catch (e) {
+            console.error(e);
+            alert('ログインに失敗しました: ' + e.message);
+        }
+    });
+    document.getElementById('topbar-logout-btn').addEventListener('click', () => signOut(auth));
+    document.getElementById('denied-logout-btn').addEventListener('click', () => signOut(auth));
+
+    onAuthStateChanged(auth, (user) => {
+        const loginScreen = document.getElementById('login-screen');
+        const deniedScreen = document.getElementById('denied-screen');
+        const topbar = document.getElementById('topbar');
+        const mainContainer = document.getElementById('main-container');
+
+        if (unsubscribeSnapshot) { unsubscribeSnapshot(); unsubscribeSnapshot = null; }
+
+        if (!user) {
+            loginScreen.classList.remove('hidden');
+            deniedScreen.classList.add('hidden');
+            topbar.classList.add('hidden');
+            mainContainer.classList.add('hidden');
+            return;
+        }
+
+        // ログイン済み：まずは画面を出し、実際にデータへアクセスできるかは
+        // Firestoreのセキュリティルールが判定する（許可されていなければ購読エラーになる）
+        loginScreen.classList.add('hidden');
+        topbar.classList.remove('hidden');
+        document.getElementById('topbar-photo').src = user.photoURL || '';
+        document.getElementById('topbar-name').textContent = user.displayName || user.email || '';
+
+        startRecordsSubscription();
+    });
+
+    function startRecordsSubscription() {
+        const mainContainer = document.getElementById('main-container');
+        const deniedScreen = document.getElementById('denied-screen');
+
+        unsubscribeSnapshot = onSnapshot(recordsCol, (snapshot) => {
+            deniedScreen.classList.add('hidden');
+            mainContainer.classList.remove('hidden');
+
+            allRecords = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+            allRecords.sort((a, b) => (b.timestamp || '').localeCompare(a.timestamp || ''));
+
+            onRecordsUpdated();
+        }, (err) => {
+            console.error(err);
+            // 権限がない（登録されていないアカウント）場合はここに来る
+            mainContainer.classList.add('hidden');
+            deniedScreen.classList.remove('hidden');
+        });
+    }
+
+    // データが更新されるたびに、現在表示中のタブに応じて再描画する
+    function onRecordsUpdated() {
+        updateLastMilkInfo();
+        if (currentTab === 'history') {
+            renderHistory();
+        } else if (currentTab === 'memo') {
+            renderMemoList();
+        }
+    }
+
+    function updateLastMilkInfo() {
+        const milkRecords = allRecords.filter(isMilk);
+        if (milkRecords.length > 0) {
+            lastRecordTime = milkRecords[0].timestamp;
+            lastRecordAmount = milkRecords[0].amount;
+            document.getElementById('last-amount').innerText = `${lastRecordAmount}ml`;
+            updateElapsedTime();
+        } else {
+            lastRecordAmount = null;
+            document.getElementById('last-amount').innerText = '-';
+            document.getElementById('elapsed-time').innerText = 'データなし';
+        }
+    }
+
+    // ==========================================================
+    // Firestore CRUD ヘルパー
+    // ==========================================================
+    function buildMilkRecordData(data) {
+        const d = new Date(data.timestamp);
+        return {
+            type: 'milk',
+            date: formatJST(d, 'date'),
+            time: formatJST(d, 'time'),
+            timestamp: data.timestamp,
+            amount: Number(data.amount),
+            memo: data.memo || ''
+        };
+    }
+    function buildMemoRecordData(data) {
+        return {
+            type: 'memo',
+            date: data.date,
+            content: data.content || '',
+            transcribed: !!data.transcribed
+        };
+    }
+    function formatJST(date, type) {
+        const parts = new Intl.DateTimeFormat('ja-JP', {
+            timeZone: 'Asia/Tokyo', year: 'numeric', month: '2-digit', day: '2-digit',
+            hour: '2-digit', minute: '2-digit', hour12: false
+        }).formatToParts(date);
+        const o = {};
+        parts.forEach(p => o[p.type] = p.value);
+        return type === 'date' ? `${o.year}/${o.month}/${o.day}` : `${o.hour}:${o.minute}`;
+    }
+
+    async function addMilkRecord(data) {
+        await addDoc(recordsCol, buildMilkRecordData(data));
+    }
+    async function saveMilkRecord(data) {
+        await setDoc(doc(db, 'records', data.id), buildMilkRecordData(data));
+    }
+    async function deleteRecordById(id) {
+        await deleteDoc(doc(db, 'records', id));
+    }
+    async function addMemoRecord(data) {
+        await addDoc(recordsCol, buildMemoRecordData(data));
+    }
+    async function saveMemoRecord(data) {
+        await setDoc(doc(db, 'records', data.id), buildMemoRecordData(data));
+    }
+
+    // ==========================================================
+    // 以下、画面ロジック（既存アプリのロジックをそのまま踏襲）
+    // ==========================================================
+    let lastRecordTime = null;
+    let lastRecordAmount = null;
+    let chartMode = 'session';
+    let currentTab = 'record'; // ★追加：現在アクティブなタブを保持
+
+    const sessionPalette = ['#a8d8ea', '#ffb3ba', '#ffe4a3', '#b5e7c8', '#d4b3e0', '#ffcda3', '#a3e0d0', '#e0b3d4'];
+    const timePalette = ['#b3bce0', '#ffb3ba', '#ffdba8', '#d9b8e0'];
+    const timeLabels = ['0:00〜', '6:00〜', '12:00〜', '18:00〜'];
+    let allRecords = [];
+    function isMilk(r) { return !r.type || r.type === 'milk'; }
+    function isMemo(r) { return r.type === 'memo'; }
+    function escapeHtml(str) {
+        const div = document.createElement('div');
+        div.innerText = str;
+        return div.innerHTML;
+    }
+    let memoFilterMode = 'untranscribed';
+    let recordTimeManuallyChanged = false;
+    let lastChartDayData = [];
+
+    window.addEventListener('DOMContentLoaded', () => {
+        initAmountSelector();
+        resetFormTime();
+        resetMemoDate();
+
+        document.getElementById('record-time').addEventListener('input', () => {
+            recordTimeManuallyChanged = true;
+        });
+
+        setInterval(updateElapsedTime, 1000);
+        setInterval(() => {
+            if (!recordTimeManuallyChanged) resetFormTime();
+        }, 1000);
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                switchTab('record');
+                updateElapsedTime();
+                if (!recordTimeManuallyChanged) resetFormTime();
+            }
+        });
+    });
+
+    function initAmountSelector() {
+        const recordSelect = document.getElementById('record-amount');
+        const modalSelect = document.getElementById('edit-amount');
+        for (let ml = 20; ml <= 240; ml += 10) {
+            const opt1 = document.createElement('option');
+            opt1.value = ml;
+            opt1.innerText = ml + ' ml';
+            if (ml === 100) opt1.selected = true;
+            recordSelect.appendChild(opt1);
+
+            const opt2 = document.createElement('option');
+            opt2.value = ml;
+            opt2.innerText = ml + ' ml';
+            modalSelect.appendChild(opt2);
+        }
+    }
+
+    function resetFormTime() {
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        document.getElementById('record-time').value = now.toISOString().slice(0, 16);
+    }
+
+    window.switchTab = function(tabName) {
+        currentTab = tabName;
+        const order = ['record', 'history', 'memo'];
+        document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', order[i] === tabName));
+        document.getElementById('page-record').classList.toggle('active', tabName === 'record');
+        document.getElementById('page-history').classList.toggle('active', tabName === 'history');
+        document.getElementById('page-memo').classList.toggle('active', tabName === 'memo');
+
+        if (tabName === 'history') {
+            renderHistory();
+        } else if (tabName === 'record') {
+            updateLastMilkInfo();
+        } else if (tabName === 'memo') {
+            renderMemoList();
+        }
+    };
+
+    function updateElapsedTime() {
+        const elapsedEl = document.getElementById('elapsed-time');
+        if (!lastRecordTime) {
+            elapsedEl.innerText = '--時間--分';
+            elapsedEl.style.color = '';
+            return;
+        }
+        const diffMs = new Date() - new Date(lastRecordTime);
+        if (diffMs < 0) {
+            elapsedEl.innerText = '0分';
+            elapsedEl.style.color = '';
+            return;
+        }
+        const diffHrs = Math.floor(diffMs / 3600000);
+        const diffMins = Math.floor((diffMs % 3600000) / 60000);
+        elapsedEl.innerText = `${diffHrs}時間${diffMins}分`;
+
+        if (diffMs >= 3 * 3600000) {
+            elapsedEl.style.color = '#e74c3c';
+        } else if (diffMs >= 2 * 3600000) {
+            elapsedEl.style.color = '#f39c12';
+        } else {
+            elapsedEl.style.color = '';
+        }
+    }
+
+    // 新規登録ボタン
+    window.submitRecord = async function() {
+        const timeVal = document.getElementById('record-time').value;
+        const memoVal = document.getElementById('record-memo').value;
+        const amountVal = document.getElementById('record-amount').value;
+        if (!timeVal) return alert('日時を入力してください');
+
+        const record = {
+            timestamp: new Date(timeVal).toISOString(),
+            amount: parseInt(amountVal),
+            memo: memoVal
+        };
+
+        const submitBtn = document.querySelector('#page-record .btn');
+        submitBtn.disabled = true;
+        submitBtn.innerText = '登録中...';
+
+        try {
+            await addMilkRecord(record);
+            document.getElementById('record-memo').value = '';
+            recordTimeManuallyChanged = false;
+            resetFormTime();
+            alert('登録しました！');
+        } catch (err) {
+            alert('登録に失敗しました。お手数ですがもう一度お試しください。（' + err.message + '）');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerText = 'この内容で登録';
+        }
+    };
+
+    // 履歴と分析の描画
+    window.renderHistory = function() {
+        document.getElementById('loading-history').style.display = 'none';
+
+        const filterEl = document.getElementById('period-filter');
+        if (!filterEl) return;
+
+        const days = parseInt(filterEl.value);
+        const container = document.getElementById('history-container');
+        if (!container) return;
+
+        container.innerHTML = '';
+
+        const cutoffDate = new Date();
+        cutoffDate.setDate(cutoffDate.getDate() - days);
+
+        const filtered = allRecords.filter(r => isMilk(r) && new Date(r.timestamp) >= cutoffDate);
+
+        calculateStats(filtered);
+        renderWeeklyChart();
+
+        if (filtered.length === 0) {
+            container.innerHTML = '<div class="loading">期間内のデータがありません</div>';
+            return;
+        }
+
+        filtered.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'history-item';
+            div.innerHTML = `
+                <div class="history-info">
+                    <span class="history-time">${item.time}</span>
+                    <span class="history-date">${item.date}${item.memo ? ' 💬' + escapeHtml(item.memo) : ''}</span>
+                </div>
+                <div style="display:flex; align-items:center;">
+                    <span class="history-amount">${item.amount}ml</span>
+                    <div class="history-actions">
+                        <button onclick="openEditModal('${item.id}')">✏️</button>
+                    </div>
+                </div>
+            `;
+            container.appendChild(div);
+        });
+    };
+
+    function calculateStats(records) {
+        if (records.length === 0) {
+            document.getElementById('stat-avg-amount').innerText = '- ml';
+            document.getElementById('stat-avg-interval').innerText = '-';
+            return;
+        }
+
+        const todayStr = jstDateStr(new Date());
+        const completeDayRecords = records.filter(r => r.date !== todayStr);
+
+        const dateMap = {};
+        completeDayRecords.forEach(r => {
+            dateMap[r.date] = (dateMap[r.date] || 0) + parseInt(r.amount);
+        });
+        const totalDays = Object.keys(dateMap).length;
+        const totalAmount = Object.values(dateMap).reduce((a,b)=>a+b, 0);
+        document.getElementById('stat-avg-amount').innerText = totalDays > 0 ? `${Math.round(totalAmount / totalDays)} ml` : '- ml';
+
+        const sorted = [...records].sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
+        let totalDiffMs = 0;
+        let count = 0;
+        for (let i = 1; i < sorted.length; i++) {
+            const diff = new Date(sorted[i].timestamp) - new Date(sorted[i-1].timestamp);
+            if (diff > 0 && diff < 24 * 3600000) {
+                totalDiffMs += diff;
+                count++;
+            }
+        }
+        if (count > 0) {
+            const avgMs = totalDiffMs / count;
+            const avgHrs = Math.floor(avgMs / 3600000);
+            const avgMins = Math.round((avgMs % 3600000) / 60000);
+            document.getElementById('stat-avg-interval').innerText = `${avgHrs}時間${avgMins}分`;
+        } else {
+            document.getElementById('stat-avg-interval').innerText = '-';
+        }
+    }
+
+    function jstDateStr(date) {
+        const parts = new Intl.DateTimeFormat('en-CA', {
+            timeZone: 'Asia/Tokyo', year: 'numeric', month: '2-digit', day: '2-digit'
+        }).formatToParts(date);
+        const o = {};
+        parts.forEach(p => o[p.type] = p.value);
+        return `${o.year}/${o.month}/${o.day}`;
+    }
+
+    function renderWeeklyChart() {
+        const container = document.getElementById('weekly-chart');
+        const legendContainer = document.getElementById('weekly-chart-legend');
+        if (!container) return;
+
+        const days = [];
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date(Date.now() - i * 86400000);
+            days.push(d);
+        }
+
+        const byDay = {};
+        allRecords.filter(isMilk).forEach(r => {
+            if (!byDay[r.date]) byDay[r.date] = [];
+            byDay[r.date].push(r);
+        });
+        Object.values(byDay).forEach(arr => arr.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp)));
+
+        const dayData = days.map(d => {
+            const key = jstDateStr(d);
+            const records = byDay[key] || [];
+            const total = records.reduce((sum, r) => sum + Number(r.amount), 0);
+            return { dateObj: d, key, records, total };
+        });
+
+        lastChartDayData = dayData;
+
+        const maxTotal = Math.max(...dayData.map(d => d.total), 100);
+
+        const width = 340, height = 210;
+        const marginTop = 20, marginBottom = 34, marginLeft = 10, marginRight = 10;
+        const chartHeight = height - marginTop - marginBottom;
+        const barAreaWidth = (width - marginLeft - marginRight) / 7;
+        const barWidth = barAreaWidth * 0.55;
+
+        let svg = `<svg viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg" style="width:100%; height:auto;">`;
+
+        dayData.forEach((d, i) => {
+            const x = marginLeft + i * barAreaWidth + (barAreaWidth - barWidth) / 2;
+            let yCursor = marginTop + chartHeight;
+
+            d.records.forEach((r, sessionIndex) => {
+                const segHeight = (Number(r.amount) / maxTotal) * chartHeight;
+                yCursor -= segHeight;
+                const color = getColorForRecord(r, sessionIndex);
+                svg += `<rect x="${x}" y="${yCursor}" width="${barWidth}" height="${segHeight}" fill="${color}" rx="2">
+                            <title>${r.time} ${r.amount}ml</title>
+                        </rect>`;
+            });
+
+            if (d.total > 0) {
+                const topY = marginTop + chartHeight - (d.total / maxTotal) * chartHeight;
+                svg += `<text x="${x + barWidth / 2}" y="${topY - 4}" font-size="10" text-anchor="middle" fill="#2c3e50">${d.total}</text>`;
+            }
+
+            const md = `${d.dateObj.getMonth() + 1}/${d.dateObj.getDate()}`;
+            const wd = new Intl.DateTimeFormat('ja-JP', { timeZone: 'Asia/Tokyo', weekday: 'short' }).format(d.dateObj);
+            svg += `<text x="${x + barWidth / 2}" y="${height - marginBottom + 14}" font-size="10" text-anchor="middle" fill="#7f8c8d">${md}(${wd})</text>`;
+
+            const tapX = marginLeft + i * barAreaWidth;
+            svg += `<rect x="${tapX}" y="${marginTop}" width="${barAreaWidth}" height="${chartHeight}" fill="transparent" style="cursor:pointer;" onclick="openDayDetailModal(${i})"></rect>`;
+        });
+
+        svg += `</svg>`;
+        container.innerHTML = svg;
+
+        if (legendContainer) {
+            let legendHtml = '';
+            if (chartMode === 'timeofday') {
+                for (let i = 0; i < 4; i++) {
+                    legendHtml += `<span class="legend-item"><span class="legend-swatch" style="background:${timePalette[i]}"></span>${timeLabels[i]}</span>`;
+                }
+            } else {
+                const maxSessions = Math.max(...dayData.map(d => d.records.length), 1);
+                for (let i = 0; i < maxSessions; i++) {
+                    legendHtml += `<span class="legend-item"><span class="legend-swatch" style="background:${sessionPalette[i % sessionPalette.length]}"></span>${i + 1}</span>`;
+                }
+            }
+            legendContainer.innerHTML = legendHtml;
+        }
+    }
+
+    function buildSortedRecordsAsc() {
+        return allRecords.filter(isMilk).sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+    }
+
+    function getIntervalTextFor(record, sortedAsc) {
+        const idx = sortedAsc.findIndex(r => r.id === record.id);
+        if (idx <= 0) return null;
+        const diffMs = new Date(sortedAsc[idx].timestamp) - new Date(sortedAsc[idx - 1].timestamp);
+        if (diffMs <= 0) return null;
+        const hrs = Math.floor(diffMs / 3600000);
+        const mins = Math.floor((diffMs % 3600000) / 60000);
+        return `${hrs}時間${mins}分`;
+    }
+
+    window.openDayDetailModal = function(dayIndex) {
+        const d = lastChartDayData[dayIndex];
+        if (!d) return;
+
+        const md = `${d.dateObj.getMonth() + 1}/${d.dateObj.getDate()}`;
+        const wd = new Intl.DateTimeFormat('ja-JP', { timeZone: 'Asia/Tokyo', weekday: 'short' }).format(d.dateObj);
+        document.getElementById('day-detail-title').innerText = `${md}(${wd})の記録`;
+
+        const listContainer = document.getElementById('day-detail-list');
+        const totalContainer = document.getElementById('day-detail-total');
+
+        if (d.records.length === 0) {
+            totalContainer.innerText = '';
+            listContainer.innerHTML = '<div class="day-detail-empty">この日の記録はありません</div>';
+            document.getElementById('day-detail-modal').style.display = 'flex';
+            return;
+        }
+
+        totalContainer.innerText = `合計 ${d.total}ml（${d.records.length}回）`;
+
+        const sortedAsc = buildSortedRecordsAsc();
+
+        listContainer.innerHTML = '';
+        d.records.forEach(r => {
+            const intervalText = getIntervalTextFor(r, sortedAsc);
+            const div = document.createElement('div');
+            div.className = 'history-item';
+            div.innerHTML = `
+                <div class="history-info">
+                    <span class="history-time">${r.time}${intervalText ? ` <span style="font-size:0.75rem; font-weight:normal; color:#7f8c8d;">(前回から${intervalText})</span>` : ''}</span>
+                    <span class="history-date">${r.memo ? '💬' + escapeHtml(r.memo) : ''}</span>
+                </div>
+                <span class="history-amount">${r.amount}ml</span>
+            `;
+            listContainer.appendChild(div);
+        });
+
+        document.getElementById('day-detail-modal').style.display = 'flex';
+    };
+
+    window.closeDayDetailModal = function() {
+        document.getElementById('day-detail-modal').style.display = 'none';
+    };
+
+    window.openEditModal = function(id) {
+        const item = allRecords.find(r => r.id === id);
+        if (!item) return;
+        document.getElementById('modal-title').innerText = "記録の編集";
+        document.getElementById('edit-id').value = item.id;
+        document.getElementById('edit-amount').value = item.amount;
+        document.getElementById('edit-memo').value = item.memo || '';
+        document.getElementById('delete-btn').style.display = 'block';
+
+        const t = new Date(item.timestamp);
+        t.setMinutes(t.getMinutes() - t.getTimezoneOffset());
+        document.getElementById('edit-time').value = t.toISOString().slice(0, 16);
+        document.getElementById('edit-modal').style.display = 'flex';
+    };
+
+    window.openAddModal = function() {
+        document.getElementById('modal-title').innerText = "過去の記録を追加";
+        document.getElementById('edit-id').value = '';
+        document.getElementById('edit-amount').value = 100;
+        document.getElementById('edit-memo').value = '';
+        document.getElementById('delete-btn').style.display = 'none';
+
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        document.getElementById('edit-time').value = now.toISOString().slice(0, 16);
+        document.getElementById('edit-modal').style.display = 'flex';
+    };
+
+    window.closeModal = function() {
+        document.getElementById('edit-modal').style.display = 'none';
+    };
+
+    window.saveEdit = async function() {
+        const id = document.getElementById('edit-id').value;
+        const timeVal = document.getElementById('edit-time').value;
+        const amountVal = document.getElementById('edit-amount').value;
+        const memoVal = document.getElementById('edit-memo').value;
+
+        if (!timeVal) return alert('日時を入力してください');
+
+        const record = {
+            id: id || undefined,
+            timestamp: new Date(timeVal).toISOString(),
+            amount: parseInt(amountVal),
+            memo: memoVal
+        };
+
+        try {
+            if (record.id) {
+                await saveMilkRecord(record);
+            } else {
+                await addMilkRecord(record);
+            }
+            closeModal();
+        } catch (err) {
+            alert('保存エラー: ' + err.message);
+        }
+    };
+
+    window.deleteRecord = async function() {
+        const id = document.getElementById('edit-id').value;
+        if (!id || !confirm('この記録を削除してもよろしいですか？')) return;
+
+        try {
+            await deleteRecordById(id);
+            closeModal();
+        } catch (err) {
+            alert('削除エラー: ' + err.message);
+        }
+    };
+
+    window.setChartMode = function(mode) {
+        chartMode = mode;
+        document.getElementById('mode-btn-session').classList.toggle('active', mode === 'session');
+        document.getElementById('mode-btn-time').classList.toggle('active', mode === 'timeofday');
+        renderWeeklyChart();
+    };
+
+    function getJSTHour(timestamp) {
+        const d = new Date(timestamp);
+        const parts = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Tokyo', hour: 'numeric', hour12: false }).formatToParts(d);
+        let hour = parseInt(parts.find(p => p.type === 'hour').value, 10);
+        if (hour === 24) hour = 0;
+        return hour;
+    }
+
+    function getColorForRecord(record, sessionIndex) {
+        if (chartMode === 'timeofday') {
+            const hour = getJSTHour(record.timestamp);
+            const bucket = hour < 6 ? 0 : hour < 12 ? 1 : hour < 18 ? 2 : 3;
+            return timePalette[bucket];
+        }
+        return sessionPalette[sessionIndex % sessionPalette.length];
+    }
+
+    function resetMemoDate() {
+        const el = document.getElementById('memo-date');
+        if (!el) return;
+        el.value = jstDateStr(new Date()).replaceAll('/', '-');
+    }
+
+    window.setMemoFilter = function(mode) {
+        memoFilterMode = mode;
+        document.getElementById('memo-filter-untranscribed').classList.toggle('active', mode === 'untranscribed');
+        document.getElementById('memo-filter-all').classList.toggle('active', mode === 'all');
+        renderMemoList();
+    };
+
+    window.renderMemoList = function() {
+        const onlyUntranscribed = memoFilterMode === 'untranscribed';
+        let memos = allRecords.filter(isMemo);
+        if (onlyUntranscribed) memos = memos.filter(m => !m.transcribed);
+
+        memos.sort((a, b) => {
+            if (a.date !== b.date) return a.date < b.date ? 1 : -1;
+            return a.id < b.id ? 1 : -1;
+        });
+
+        const container = document.getElementById('memo-list-container');
+        container.innerHTML = '';
+
+        if (memos.length === 0) {
+            container.innerHTML = `<div class="loading">${onlyUntranscribed ? '未転記のメモはありません' : 'メモがありません'}</div>`;
+            return;
+        }
+
+        let currentDate = null;
+        memos.forEach(m => {
+            if (m.date !== currentDate) {
+                currentDate = m.date;
+                const header = document.createElement('div');
+                header.className = 'memo-date-header';
+                header.innerText = currentDate;
+                container.appendChild(header);
+            }
+            const div = document.createElement('div');
+            div.className = 'memo-item' + (m.transcribed ? ' memo-transcribed' : '');
+            div.innerHTML = `
+                <label class="memo-checkbox-label">
+                    <input type="checkbox" ${m.transcribed ? 'checked' : ''} onchange="toggleMemoTranscribed('${m.id}', this.checked)">
+                </label>
+                <div class="memo-content">${escapeHtml(m.content)}</div>
+                <div class="memo-actions">
+                    <button onclick="openMemoEditModal('${m.id}')">✏️</button>
+                </div>
+            `;
+            container.appendChild(div);
+        });
+    };
+
+    window.submitMemo = async function() {
+        const dateVal = document.getElementById('memo-date').value;
+        const contentVal = document.getElementById('memo-content').value.trim();
+        if (!dateVal) return alert('日付を入力してください');
+        if (!contentVal) return alert('内容を入力してください');
+
+        const submitBtn = document.getElementById('memo-submit-btn');
+        submitBtn.disabled = true;
+        submitBtn.innerText = '登録中...';
+
+        try {
+            await addMemoRecord({ date: dateVal.replaceAll('-', '/'), content: contentVal });
+            document.getElementById('memo-content').value = '';
+            alert('メモを登録しました！');
+        } catch (err) {
+            alert('登録に失敗しました。（' + err.message + '）');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerText = 'メモを登録';
+        }
+    };
+
+    window.toggleMemoTranscribed = async function(id, checked) {
+        const memo = allRecords.find(r => r.id === id && isMemo(r));
+        if (!memo) return;
+        try {
+            await saveMemoRecord({ id: memo.id, date: memo.date, content: memo.content, transcribed: checked });
+        } catch (err) {
+            alert('更新に失敗しました。（' + err.message + '）');
+            renderMemoList();
+        }
+    };
+
+    window.openMemoEditModal = function(id) {
+        const m = allRecords.find(r => r.id === id && isMemo(r));
+        if (!m) return;
+        document.getElementById('memo-edit-id').value = m.id;
+        document.getElementById('memo-edit-date').value = m.date.replaceAll('/', '-');
+        document.getElementById('memo-edit-content').value = m.content;
+        document.getElementById('memo-edit-modal').style.display = 'flex';
+    };
+    window.closeMemoEditModal = function() {
+        document.getElementById('memo-edit-modal').style.display = 'none';
+    };
+    window.saveMemoEdit = async function() {
+        const id = document.getElementById('memo-edit-id').value;
+        const dateVal = document.getElementById('memo-edit-date').value;
+        const contentVal = document.getElementById('memo-edit-content').value.trim();
+        if (!dateVal || !contentVal) return alert('日付と内容を入力してください');
+
+        const existing = allRecords.find(r => r.id === id);
+        try {
+            await saveMemoRecord({
+                id,
+                date: dateVal.replaceAll('-', '/'),
+                content: contentVal,
+                transcribed: existing ? existing.transcribed : false
+            });
+            closeMemoEditModal();
+        } catch (err) {
+            alert('保存エラー: ' + err.message);
+        }
+    };
+    window.deleteMemoConfirm = async function() {
+        const id = document.getElementById('memo-edit-id').value;
+        if (!confirm('このメモを削除してもよろしいですか？')) return;
+        try {
+            await deleteRecordById(id);
+            closeMemoEditModal();
+        } catch (err) {
+            alert('削除エラー: ' + err.message);
+        }
+    };
+</script>
+</body>
+</html>
