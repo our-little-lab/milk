@@ -63,31 +63,17 @@
         .memo-content { flex: 1; font-size: 0.95rem; line-height: 1.4; }
         .memo-transcribed .memo-content { text-decoration: line-through; color: #b0b8bd; }
         .memo-actions button { background: none; border: none; cursor: pointer; font-size: 1.05rem; }
-
-        /* ===== ★追加：ログイン画面・上部ユーザーバー ===== */
-        #login-screen {
-            max-width: 500px; margin: 60px auto 0; text-align: center;
+        .chart-scroll-container {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
         }
-        #login-screen .card { padding: 32px 24px; }
-        #login-screen p { color: #7f8c8d; font-size: 0.9rem; margin-bottom: 20px; }
-        .btn-google {
-            width: 100%; background: #fff; border: 1px solid var(--border-color); color: var(--text-color);
-            display: flex; align-items: center; justify-content: center; gap: 10px; padding: 12px;
-            border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer;
-        }
-        .btn-google:hover { background: #f2f3f5; }
-        #topbar {
-            display: flex; align-items: center; gap: 8px; max-width: 500px; margin: 0 auto 10px;
-            background: white; border-radius: 12px; padding: 8px 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        }
-        #topbar img { width: 28px; height: 28px; border-radius: 50%; }
-        #topbar .topbar-name { font-size: 0.85rem; font-weight: bold; }
-        #topbar .btn-logout {
-            margin-left: auto; background: none; border: none; color: #7f8c8d; font-size: 0.8rem; cursor: pointer;
-        }
-        #denied-screen { max-width: 500px; margin: 60px auto 0; text-align: center; }
-        #denied-screen .card { padding: 32px 24px; }
-        .hidden { display: none !important; }
+        /* GitHubトークンの期限が近づいたときの警告バナー(全タブ共通で上部に表示) */
+        .token-banner { border-radius: 12px; padding: 12px 14px; margin-bottom: 15px; font-size: 0.85rem; line-height: 1.5; background: #fff4e0; border: 1px solid #f39c12; color: #7a4b00; }
+        .token-banner.urgent { background: #fdecea; border-color: #e74c3c; color: #8a1f14; }
+        .token-banner .token-banner-title { font-weight: bold; font-size: 0.95rem; margin-bottom: 4px; }
+        .token-banner .token-banner-steps { font-size: 0.75rem; opacity: 0.85; margin-top: 6px; }
+        /* 通信できなかったときの、控えめなお知らせ(アラートで画面を止めないため) */
+        .network-notice { border-radius: 12px; padding: 10px 14px; margin-bottom: 15px; font-size: 0.8rem; line-height: 1.5; background: #eef1f4; border: 1px solid #b0b8bd; color: #4a5560; }
     </style>
     <!-- ファビコン -->
 <link rel="icon" type="image/png" href="icon.png">
@@ -108,51 +94,30 @@
 
 </head>
 <body>
-
-<!-- ===== ★追加：ログイン画面 ===== -->
-<div id="login-screen">
-    <div class="card">
-        <h2>🍼 赤ちゃんミルク記録</h2>
-        <p>ご家族のGoogleアカウントでログインしてください</p>
-        <button class="btn-google" id="login-btn">
-            <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.9 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 8 3l6-6C34.1 5.1 29.3 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21 21-9.4 21-21c0-1.4-.1-2.7-.4-4z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 18.9 12 24 12c3.1 0 5.8 1.1 8 3l6-6C34.1 5.1 29.3 3 24 3 16.1 3 9.1 7.4 6.3 14.7z"/><path fill="#4CAF50" d="M24 45c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 36 26.7 37 24 37c-5.3 0-9.7-3.4-11.3-8.1l-6.6 5.1C9 40.5 16 45 24 45z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.2 5.6l6.2 5.2C40.5 36.1 45 30.6 45 24c0-1.4-.1-2.7-.4-3.5z"/></svg>
-            Googleでログイン
-        </button>
-    </div>
-</div>
-
-<!-- ===== ★追加：アクセス権なし画面 ===== -->
-<div id="denied-screen" class="hidden">
-    <div class="card">
-        <h2>⚠️ アクセス権がありません</h2>
-        <p style="margin-top:10px;">このアプリは登録されたご家族のみご利用いただけます。</p>
-        <button class="btn" id="denied-logout-btn" style="background:#95a5a6;">別のアカウントでログイン</button>
-    </div>
-</div>
-
-<!-- ===== ★追加：上部ユーザーバー ===== -->
-<div id="topbar" class="hidden">
-    <img id="topbar-photo" src="" alt="">
-    <span class="topbar-name" id="topbar-name"></span>
-    <button class="btn-logout" id="topbar-logout-btn">ログアウト</button>
-</div>
-
-<div class="container hidden" id="main-container">
+<div class="container">
     <div class="tabs">
-        <div class="tab active" onclick="switchTab('record')">記録入力</div>
-        <div class="tab" onclick="switchTab('history')">履歴・分析</div>
+        <div class="tab active" onclick="switchTab('record')">記録</div>
+        <div class="tab" onclick="switchTab('history')">履歴</div>
         <div class="tab" onclick="switchTab('memo')">育児メモ</div>
+        <div class="tab" onclick="switchTab('line')">通知</div>
     </div>
+
+    <!-- GitHubトークンの期限が近づいたときだけ表示される警告(普段は非表示) -->
+    <div id="token-expiry-banner" class="token-banner" style="display:none;"></div>
+
+    <!-- 通信できなかったときだけ表示されるお知らせ(通信が回復すると自動で消える) -->
+    <div id="network-notice" class="network-notice" style="display:none;">📡 通信できませんでした。表示中のデータは古い可能性があります。通信が回復すると自動で更新します。</div>
 
     <div id="page-record" class="page active">
         <div class="card">
             <div class="timer-box">
-                🍼 前回のミルクから <span id="elapsed-time">計算中...</span> 経過<br>
+                <span id="baby-age" style="display:block; font-size:0.9rem; color:#7f8c8d; margin-bottom:6px;"></span>
+                前回の🍼から <span id="elapsed-time">計算中...</span> 経過<br>
                 <span style="font-size:0.85rem; color:#7f8c8d;">前回の量: <span id="last-amount">-</span></span>
             </div>
             <h2>ミルク記録</h2>
             <div class="form-group">
-                <label for="record-time">cあげた日時（自動で現在時刻）</label>
+                <label for="record-time">あげた日時（自動で現在時刻）</label>
                 <input type="datetime-local" id="record-time">
             </div>
             <div class="form-group">
@@ -178,16 +143,20 @@
                 <div class="stat-val" id="stat-avg-interval">-</div>
             </div>
         </div>
+        <!-- ↓ ここから追加 -->
         <div class="card">
-            <h2>直近7日間のミルク量</h2>
+            <h2>過去のミルク量</h2>
             <div class="chart-mode-toggle">
                 <button id="mode-btn-session" class="mode-btn active" onclick="setChartMode('session')">回数ごと</button>
                 <button id="mode-btn-time" class="mode-btn" onclick="setChartMode('timeofday')">時間帯ごと</button>
             </div>
-            <div id="weekly-chart"></div>
+            <div class="chart-scroll-container" id="chart-scroll-container">
+                <div id="weekly-chart"></div>
+            </div>
             <div id="weekly-chart-legend" style="display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; font-size:0.8rem;"></div>
-            <div style="text-align:center; font-size:0.75rem; color:#7f8c8d; margin-top:8px;">棒をタップするとその日の詳細が見られます</div>
+            <div style="text-align:center; font-size:0.75rem; color:#7f8c8d; margin-top:8px;">左右にスワイプすると過去の週も見られます</div>
         </div>
+        <!-- ↑ ここまで追加 -->
         <div class="card">
             <h2>履歴一覧</h2>
             <div class="filter-box">
@@ -225,6 +194,86 @@
             <div id="memo-list-container"></div>
         </div>
     </div>
+    <div id="page-line" class="page">
+        <!-- LINEボタンの量設定は非表示（LINE通知時のボタンは記録タブの初期量から自動算出するため、手動設定は不要） -->
+        <div class="card" style="display:none;">
+            <h2>LINEボタンの量設定</h2>
+            <div id="line-amount-list"></div>
+            <div class="form-group" style="display:flex; gap:8px; margin-top:10px;">
+                <input type="number" id="line-new-amount" placeholder="例：160" style="flex:1; padding:10px; border-radius:8px; border:1px solid var(--border-color);">
+                <button class="btn" style="width:auto; margin-top:0; padding:10px 16px;" onclick="addLineAmount()">追加</button>
+            </div>
+        </div>
+        <div class="card">
+            <h2>通知設定</h2>
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="notify-enabled" style="width:auto; margin-right:6px;">
+                    経過通知を有効にする
+                </label>
+            </div>
+            <div class="form-group">
+                <label for="notify-minutes">何分経過したら通知するか</label>
+                <input type="number" id="notify-minutes" placeholder="例：180" style="width:100%; padding:12px; border-radius:8px; border:1px solid var(--border-color);">
+            </div>
+        
+            <div style="border-top:1px solid var(--border-color); margin-top:16px; padding-top:16px;">
+                <h2 style="font-size:1rem; text-align:left;">あなたの通知方法</h2>
+                <div style="display:flex; flex-direction:column; gap:8px; margin-top:6px;">
+                    <label style="font-weight:normal; display:flex; align-items:center; gap:6px;">
+                        <input type="radio" name="notify-method-you" value="auto" style="width:auto;">
+                        自動（LINE優先、失敗した日はメール）
+                    </label>
+                    <label style="font-weight:normal; display:flex; align-items:center; gap:6px;">
+                        <input type="radio" name="notify-method-you" value="line" style="width:auto;">
+                        LINEのみ
+                    </label>
+                    <label style="font-weight:normal; display:flex; align-items:center; gap:6px;">
+                        <input type="radio" name="notify-method-you" value="email" style="width:auto;">
+                        メールのみ
+                    </label>
+                    <label style="font-weight:normal; display:flex; align-items:center; gap:6px;">
+                        <input type="radio" name="notify-method-you" value="none" style="width:auto;">
+                        通知しない
+                    </label>
+                </div>
+                <div class="form-group" style="margin-top:10px;">
+                    <label for="notify-email-you">通知先メールアドレス</label>
+                    <input type="email" id="notify-email-you" placeholder="example@example.com" style="width:100%; padding:12px; border-radius:8px; border:1px solid var(--border-color);">
+                </div>
+            </div>
+        
+            <div style="border-top:1px solid var(--border-color); margin-top:16px; padding-top:16px;">
+                <h2 style="font-size:1rem; text-align:left;">配偶者の通知方法</h2>
+                <div style="display:flex; flex-direction:column; gap:8px; margin-top:6px;">
+                    <label style="font-weight:normal; display:flex; align-items:center; gap:6px;">
+                        <input type="radio" name="notify-method-wife" value="auto" style="width:auto;">
+                        自動（LINE優先、失敗した日はメール）
+                    </label>
+                    <label style="font-weight:normal; display:flex; align-items:center; gap:6px;">
+                        <input type="radio" name="notify-method-wife" value="line" style="width:auto;">
+                        LINEのみ
+                    </label>
+                    <label style="font-weight:normal; display:flex; align-items:center; gap:6px;">
+                        <input type="radio" name="notify-method-wife" value="email" style="width:auto;">
+                        メールのみ
+                    </label>
+                    <label style="font-weight:normal; display:flex; align-items:center; gap:6px;">
+                        <input type="radio" name="notify-method-wife" value="none" style="width:auto;">
+                        通知しない
+                    </label>
+                </div>
+                <div class="form-group" style="margin-top:10px;">
+                    <label for="notify-email-wife">通知先メールアドレス</label>
+                    <input type="email" id="notify-email-wife" placeholder="example@example.com" style="width:100%; padding:12px; border-radius:8px; border:1px solid var(--border-color);">
+                </div>
+            </div>
+        
+            <button class="btn" onclick="saveLineConfig()">設定を保存</button>
+            <div id="line-config-status" style="text-align:center; font-size:0.85rem; color:#7f8c8d; margin-top:8px;"></div>
+        </div>
+
+    </div>
 </div>
 
 <div class="modal" id="edit-modal">
@@ -243,7 +292,7 @@
             <label for="edit-memo">メモ</label>
             <input type="text" id="edit-memo" style="width:100%; padding:12px; border-radius:8px; border:1px solid var(--border-color); font-size:1rem;">
         </div>
-        <button class="btn" onclick="saveEdit()">保存する</button>
+        <button class="btn" id="save-edit-btn" onclick="saveEdit()">保存する</button>
         <div class="modal-buttons">
             <button class="btn btn-danger" id="delete-btn" onclick="deleteRecord()" style="flex:1;">削除</button>
             <button class="btn" onclick="closeModal()" style="flex:1; background:#95a5a6;">閉じる</button>
@@ -251,6 +300,7 @@
     </div>
 </div>
 
+<!-- ↓ 追加：日別詳細モーダル -->
 <div class="modal" id="day-detail-modal">
     <div class="modal-content">
         <h2 id="day-detail-title">日別詳細</h2>
@@ -278,179 +328,31 @@
         </div>
     </div>
 </div>
+<!-- ↑ 追加ここまで -->
 
-<script type="module">
+<!-- 登録完了トースト：OKボタンなし、2秒後に自動で閉じる -->
+<div class="modal" id="success-toast">
+    <div class="modal-content" style="text-align:center;">
+        <div style="font-size:2rem; margin-bottom:8px;">✅</div>
+        <div id="success-toast-message" style="font-weight:bold; font-size:1.05rem;"></div>
+    </div>
+</div>
+
+<script>
     // ==========================================================
-    // Firebase設定・初期化
+    // ここにあなたのGASウェブアプリのURL(/exec で終わるもの)を設定してください
     // ==========================================================
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-    import {
-        getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged
-    } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
-    import {
-        getFirestore, collection, addDoc, doc, setDoc, deleteDoc, onSnapshot
-    } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
-
-    const firebaseConfig = {
-        apiKey: "AIzaSyCLR8rqpr_yoBj_WZJ50c-4VF40DRT0ZgM",
-        authDomain: "milk-log-app-d72e5.firebaseapp.com",
-        projectId: "milk-log-app-d72e5",
-        storageBucket: "milk-log-app-d72e5.firebasestorage.app",
-        messagingSenderId: "343799422939",
-        appId: "1:343799422939:web:ad563b56d199b15c84d1fe"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-    const provider = new GoogleAuthProvider();
-    provider.setCustomParameters({ prompt: 'select_account' });
-    const recordsCol = collection(db, 'records');
-
-    let unsubscribeSnapshot = null;
-
-    // ==========================================================
-    // ログイン画面まわり
-    // ==========================================================
-    document.getElementById('login-btn').addEventListener('click', async () => {
-        try {
-            await signInWithPopup(auth, provider);
-        } catch (e) {
-            console.error(e);
-            alert('ログインに失敗しました: ' + e.message);
-        }
-    });
-    document.getElementById('topbar-logout-btn').addEventListener('click', () => signOut(auth));
-    document.getElementById('denied-logout-btn').addEventListener('click', () => signOut(auth));
-
-    onAuthStateChanged(auth, (user) => {
-        const loginScreen = document.getElementById('login-screen');
-        const deniedScreen = document.getElementById('denied-screen');
-        const topbar = document.getElementById('topbar');
-        const mainContainer = document.getElementById('main-container');
-
-        if (unsubscribeSnapshot) { unsubscribeSnapshot(); unsubscribeSnapshot = null; }
-
-        if (!user) {
-            loginScreen.classList.remove('hidden');
-            deniedScreen.classList.add('hidden');
-            topbar.classList.add('hidden');
-            mainContainer.classList.add('hidden');
-            return;
-        }
-
-        // ログイン済み：まずは画面を出し、実際にデータへアクセスできるかは
-        // Firestoreのセキュリティルールが判定する（許可されていなければ購読エラーになる）
-        loginScreen.classList.add('hidden');
-        topbar.classList.remove('hidden');
-        document.getElementById('topbar-photo').src = user.photoURL || '';
-        document.getElementById('topbar-name').textContent = user.displayName || user.email || '';
-
-        startRecordsSubscription();
-    });
-
-    function startRecordsSubscription() {
-        const mainContainer = document.getElementById('main-container');
-        const deniedScreen = document.getElementById('denied-screen');
-
-        unsubscribeSnapshot = onSnapshot(recordsCol, (snapshot) => {
-            deniedScreen.classList.add('hidden');
-            mainContainer.classList.remove('hidden');
-
-            allRecords = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-            allRecords.sort((a, b) => (b.timestamp || '').localeCompare(a.timestamp || ''));
-
-            onRecordsUpdated();
-        }, (err) => {
-            console.error(err);
-            // 権限がない（登録されていないアカウント）場合はここに来る
-            mainContainer.classList.add('hidden');
-            deniedScreen.classList.remove('hidden');
-        });
-    }
-
-    // データが更新されるたびに、現在表示中のタブに応じて再描画する
-    function onRecordsUpdated() {
-        updateLastMilkInfo();
-        if (currentTab === 'history') {
-            renderHistory();
-        } else if (currentTab === 'memo') {
-            renderMemoList();
-        }
-    }
-
-    function updateLastMilkInfo() {
-        const milkRecords = allRecords.filter(isMilk);
-        if (milkRecords.length > 0) {
-            lastRecordTime = milkRecords[0].timestamp;
-            lastRecordAmount = milkRecords[0].amount;
-            document.getElementById('last-amount').innerText = `${lastRecordAmount}ml`;
-            updateElapsedTime();
-        } else {
-            lastRecordAmount = null;
-            document.getElementById('last-amount').innerText = '-';
-            document.getElementById('elapsed-time').innerText = 'データなし';
-        }
-    }
-
-    // ==========================================================
-    // Firestore CRUD ヘルパー
-    // ==========================================================
-    function buildMilkRecordData(data) {
-        const d = new Date(data.timestamp);
-        return {
-            type: 'milk',
-            date: formatJST(d, 'date'),
-            time: formatJST(d, 'time'),
-            timestamp: data.timestamp,
-            amount: Number(data.amount),
-            memo: data.memo || ''
-        };
-    }
-    function buildMemoRecordData(data) {
-        return {
-            type: 'memo',
-            date: data.date,
-            content: data.content || '',
-            transcribed: !!data.transcribed
-        };
-    }
-    function formatJST(date, type) {
-        const parts = new Intl.DateTimeFormat('ja-JP', {
-            timeZone: 'Asia/Tokyo', year: 'numeric', month: '2-digit', day: '2-digit',
-            hour: '2-digit', minute: '2-digit', hour12: false
-        }).formatToParts(date);
-        const o = {};
-        parts.forEach(p => o[p.type] = p.value);
-        return type === 'date' ? `${o.year}/${o.month}/${o.day}` : `${o.hour}:${o.minute}`;
-    }
-
-    async function addMilkRecord(data) {
-        await addDoc(recordsCol, buildMilkRecordData(data));
-    }
-    async function saveMilkRecord(data) {
-        await setDoc(doc(db, 'records', data.id), buildMilkRecordData(data));
-    }
-    async function deleteRecordById(id) {
-        await deleteDoc(doc(db, 'records', id));
-    }
-    async function addMemoRecord(data) {
-        await addDoc(recordsCol, buildMemoRecordData(data));
-    }
-    async function saveMemoRecord(data) {
-        await setDoc(doc(db, 'records', data.id), buildMemoRecordData(data));
-    }
-
-    // ==========================================================
-    // 以下、画面ロジック（既存アプリのロジックをそのまま踏襲）
-    // ==========================================================
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbwE7zgC9r2-pRuIDQNbeSMHhKb3gHxtEZdmNZD6gcHMSCVo6kl4kSlnbhf_x_EWOPdI/exec';
+    const WORKER_URL = 'https://ancient-fog-1b99milk-log-worker.tamago1yen.workers.dev'; // Part Bで控えたURL
+    const DATA_URL = 'https://raw.githubusercontent.com/y-ogata2409-del/milk/main/data.json';
+    
     let lastRecordTime = null;
-    let lastRecordAmount = null;
-    let chartMode = 'session';
-    let currentTab = 'record'; // ★追加：現在アクティブなタブを保持
+    let lastRecordAmount = null; // ← 追加：前回の授乳量
+    let chartMode = 'session'; // 'session'(回数ごと) or 'timeofday'(時間帯ごと)
 
+    // パステル系カラーパレット
     const sessionPalette = ['#a8d8ea', '#ffb3ba', '#ffe4a3', '#b5e7c8', '#d4b3e0', '#ffcda3', '#a3e0d0', '#e0b3d4'];
-    const timePalette = ['#b3bce0', '#ffb3ba', '#ffdba8', '#d9b8e0'];
+    const timePalette = ['#b3bce0', '#ffb3ba', '#ffdba8', '#d9b8e0']; // 0時〜, 6時〜, 12時〜, 18時〜
     const timeLabels = ['0:00〜', '6:00〜', '12:00〜', '18:00〜'];
     let allRecords = [];
     function isMilk(r) { return !r.type || r.type === 'milk'; }
@@ -461,32 +363,54 @@
         return div.innerHTML;
     }
     let memoFilterMode = 'untranscribed';
-    let recordTimeManuallyChanged = false;
-    let lastChartDayData = [];
+    let recordTimeManuallyChanged = false; // ← 追加：ユーザーが手動で時刻を変えたかどうか
+    let recordAmountManuallyChanged = false; // ← 追加：ユーザーが手動で量を変えたかどうか
+    let lastChartDayData = []; // ← 追加：直近描画したグラフの日別データ（タップ時の詳細表示に使う）
 
-    window.addEventListener('DOMContentLoaded', () => {
+    window.onload = function() {
         initAmountSelector();
         resetFormTime();
-        resetMemoDate();
-
+        resetMemoDate(); // ← 追加
+        fetchInitialData();
+        loadHistoryData(); // ← 追加：ページ読み込み時に履歴・グラフも先読みしておく
+        updateBabyAge(); // ← 追加：ページ読み込み時に1回表示
+        loadLineConfig(true); // ← 追加：経過時間の文字色のしきい値(notifyMinutes)を、通知タブを開かなくても最初から正しく反映させるため(silent=trueで失敗時はalertしない)
+    
         document.getElementById('record-time').addEventListener('input', () => {
             recordTimeManuallyChanged = true;
         });
 
+        document.getElementById('record-amount').addEventListener('change', () => {
+            recordAmountManuallyChanged = true;
+        });
+    
+        // 経過時間は1秒ごとに更新(リアルタイムのカウントアップ表示)
         setInterval(updateElapsedTime, 1000);
+    
+        // 「あげた日時」欄は1分ごとに現在時刻へ自動更新(手動変更していない場合のみ)
         setInterval(() => {
-            if (!recordTimeManuallyChanged) resetFormTime();
+            if (!recordTimeManuallyChanged) {
+                resetFormTime();
+            }
         }, 1000);
 
-        document.addEventListener('visibilitychange', () => {
-            if (document.visibilityState === 'visible') {
-                switchTab('record');
-                updateElapsedTime();
-                if (!recordTimeManuallyChanged) resetFormTime();
-            }
-        });
-    });
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+        switchTab('record'); // ← 追加：他アプリ等から戻ってきたら、常に「記録入力」タブを表示する
+        updateElapsedTime();
+        updateBabyAge(); // ← 追加
+        if (!recordTimeManuallyChanged) {
+            resetFormTime();
+        }
+    }
+});
 
+
+        
+    };
+
+    // ミルク量選択プルダウン（20ml〜240ml）の自動生成。
+    // 初期値はいったん100mlにしておき、データ取得後に直近5回の平均から上書きする（setDefaultRecordAmount参照）
     function initAmountSelector() {
         const recordSelect = document.getElementById('record-amount');
         const modalSelect = document.getElementById('edit-amount');
@@ -504,29 +428,75 @@
         }
     }
 
+    // 直近5回のミルク記録の平均量から、20ml単位で一番近い量を算出する
+    function calcDefaultAmountFromHistory(milkRecords) {
+        const recentAmounts = milkRecords
+            .slice(0, 5)
+            .map(r => Number(r.amount))
+            .filter(a => !isNaN(a) && a > 0);
+
+        if (recentAmounts.length === 0) return 100; // 記録が無ければ従来通り100ml
+
+        const avg = recentAmounts.reduce((sum, a) => sum + a, 0) / recentAmounts.length;
+        let rounded = Math.round(avg / 20) * 20;
+        rounded = Math.max(20, Math.min(240, rounded)); // プルダウンの範囲内に収める
+        return rounded;
+    }
+
+    // ミルク量プルダウンの初期値を、直近5回の平均に近い量にセットする
+    // （ユーザーがすでに手動で量を選択済みの場合は上書きしない）
+    function setDefaultRecordAmount(milkRecords) {
+        if (recordAmountManuallyChanged) return;
+        const defaultAmount = calcDefaultAmountFromHistory(milkRecords);
+        const select = document.getElementById('record-amount');
+        if (select) select.value = String(defaultAmount);
+    }
+
+    // 登録完了トースト：OKボタンを押さなくても2秒後に自動で閉じる
+    let successToastTimer = null;
+    function showSuccessToast(message) {
+        const modal = document.getElementById('success-toast');
+        const msgEl = document.getElementById('success-toast-message');
+        if (!modal || !msgEl) return;
+        msgEl.innerText = message;
+        modal.style.display = 'flex';
+
+        if (successToastTimer) clearTimeout(successToastTimer);
+        successToastTimer = setTimeout(() => {
+            modal.style.display = 'none';
+        }, 2000);
+    }
+
+    // 入力フォームの時刻を現在時刻（ローカル）にセット
     function resetFormTime() {
         const now = new Date();
         now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
         document.getElementById('record-time').value = now.toISOString().slice(0, 16);
     }
 
-    window.switchTab = function(tabName) {
-        currentTab = tabName;
-        const order = ['record', 'history', 'memo'];
+    // タブ切り替え
+    // 既存のswitchTab関数を、以下の内容に置き換え
+    function switchTab(tabName) {
+        const order = ['record', 'history', 'memo', 'line'];
         document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', order[i] === tabName));
         document.getElementById('page-record').classList.toggle('active', tabName === 'record');
         document.getElementById('page-history').classList.toggle('active', tabName === 'history');
         document.getElementById('page-memo').classList.toggle('active', tabName === 'memo');
-
+        document.getElementById('page-line').classList.toggle('active', tabName === 'line');
+    
         if (tabName === 'history') {
-            renderHistory();
+            loadHistoryData();
         } else if (tabName === 'record') {
-            updateLastMilkInfo();
+            fetchInitialData();
         } else if (tabName === 'memo') {
-            renderMemoList();
+            loadMemoData();
+        } else if (tabName === 'line') {
+            loadLineConfig();
         }
-    };
+    }
 
+
+    // 前回のミルクからの経過時間タイマー更新
     function updateElapsedTime() {
         const elapsedEl = document.getElementById('elapsed-time');
         if (!lastRecordTime) {
@@ -544,48 +514,267 @@
         const diffMins = Math.floor((diffMs % 3600000) / 60000);
         elapsedEl.innerText = `${diffHrs}時間${diffMins}分`;
 
-        if (diffMs >= 3 * 3600000) {
+        // ← 変更：文字色のしきい値を固定値(2時間/3時間)ではなく、
+        //   通知設定の「何分経過したら通知するか」(currentLineConfig.notifyMinutes)から動的に算出する。
+        //   赤＝設定時間そのものに到達した時点。
+        //   オレンジ＝赤のしきい値の2/3経過した時点
+        //   （この比率は、以前の「3時間で赤・2時間でオレンジ」の関係と同じになるよう決めている。
+        //     そのため通知設定が初期値の180分(3時間)のままなら、これまでと全く同じ見た目になる）。
+        const redThresholdMs = (currentLineConfig.notifyMinutes || 180) * 60000;
+        const orangeThresholdMs = redThresholdMs * (2 / 3);
+
+        if (diffMs >= redThresholdMs) {
             elapsedEl.style.color = '#e74c3c';
-        } else if (diffMs >= 2 * 3600000) {
+        } else if (diffMs >= orangeThresholdMs) {
             elapsedEl.style.color = '#f39c12';
         } else {
             elapsedEl.style.color = '';
         }
     }
 
-    // 新規登録ボタン
-    window.submitRecord = async function() {
-        const timeVal = document.getElementById('record-time').value;
-        const memoVal = document.getElementById('record-memo').value;
-        const amountVal = document.getElementById('record-amount').value;
-        if (!timeVal) return alert('日時を入力してください');
+    // 読み込み：Cloudflare Worker経由でGitHubの最新データを取得(キャッシュの遅延なし)
+    // GitHubトークンの期限が、あと何日以内になったら警告を出すか
+    const TOKEN_WARN_DAYS = 30;   // この日数以内になったら黄色の警告
+    const TOKEN_URGENT_DAYS = 7;  // この日数以内になったら赤色の警告
 
-        const record = {
-            timestamp: new Date(timeVal).toISOString(),
-            amount: parseInt(amountVal),
-            memo: memoVal
-        };
+    // Workerから届いたトークンの有効期限(ISO文字列)をもとに、警告バナーを表示/非表示にする。
+    // 期限情報が無い(null)場合や、まだ余裕がある場合は何も表示しない。
+    function updateTokenExpiryBanner(expiresAtIso) {
+        const el = document.getElementById('token-expiry-banner');
+        if (!el) return;
+        if (!expiresAtIso) { el.style.display = 'none'; return; }
 
-        const submitBtn = document.querySelector('#page-record .btn');
-        submitBtn.disabled = true;
-        submitBtn.innerText = '登録中...';
+        const expires = new Date(expiresAtIso);
+        if (isNaN(expires.getTime())) { el.style.display = 'none'; return; }
 
-        try {
-            await addMilkRecord(record);
-            document.getElementById('record-memo').value = '';
-            recordTimeManuallyChanged = false;
-            resetFormTime();
-            alert('登録しました！');
-        } catch (err) {
-            alert('登録に失敗しました。お手数ですがもう一度お試しください。（' + err.message + '）');
-        } finally {
-            submitBtn.disabled = false;
-            submitBtn.innerText = 'この内容で登録';
+        const daysLeft = Math.ceil((expires - new Date()) / 86400000);
+        if (daysLeft > TOKEN_WARN_DAYS) { el.style.display = 'none'; return; }
+
+        const expiresStr = jstDateStr(expires); // yyyy/MM/dd(日本時間)
+        const title = daysLeft > 0
+            ? `⚠️ データ保存用のGitHubトークンの期限まで、あと${daysLeft}日です（${expiresStr}）`
+            : `⚠️ データ保存用のGitHubトークンの期限が切れています（${expiresStr}）`;
+
+        el.className = 'token-banner' + (daysLeft <= TOKEN_URGENT_DAYS ? ' urgent' : '');
+        el.innerHTML = '';
+        const t = document.createElement('div');
+        t.className = 'token-banner-title';
+        t.innerText = title;
+        const s = document.createElement('div');
+        s.className = 'token-banner-steps';
+        s.innerText = '更新方法：GitHub → Settings → Developer settings → Personal access tokens で再生成(Regenerate)し、新しいトークンをCloudflareのWorker設定「GITHUB_TOKEN」に貼り替えてください。';
+        el.appendChild(t);
+        el.appendChild(s);
+        el.style.display = 'block';
+    }
+
+    // ==========================================================
+    // 通信エラー(Wi-Fi不安定・スリープ復帰直後など)への対応
+    // ==========================================================
+    // 通信そのものに失敗したときは、最大4回まで自動で再試行する(待ち時間は1.5秒→3秒→5秒と延ばす)。
+    // iPhoneでは、アプリをバックグラウンドから戻した直後はWi-Fi接続の復帰が遅れて、
+    // 最初の通信が失敗することがあるため、数秒待ってから再試行できるようにしている。
+    // 15秒応答が無い場合も、通信失敗として扱う(回線が不安定なときに延々待たされないため)。
+    // それでも失敗したら、isNetworkError=true の例外を投げる。
+    // (サーバーが「エラーです」と返してきた場合は、通信は成功しているのでこの対象ではない)
+    async function fetchJsonWithRetry(url) {
+        const maxAttempts = 4;
+        const waitMs = [1500, 3000, 5000]; // 失敗した試行のあとに待つ時間
+        let lastErr = null;
+        for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), 15000);
+            try {
+                const res = await fetch(url, { signal: controller.signal });
+                clearTimeout(timer);
+                return await res.json();
+            } catch (e) {
+                clearTimeout(timer);
+                lastErr = e;
+                if (attempt < maxAttempts) await new Promise(r => setTimeout(r, waitMs[attempt - 1]));
+            }
         }
+        const err = new Error('通信できませんでした（' + (lastErr && lastErr.message ? lastErr.message : '不明') + '）');
+        err.isNetworkError = true;
+        throw err;
+    }
+
+    function showNetworkNotice() {
+        const el = document.getElementById('network-notice');
+        if (el) el.style.display = 'block';
+    }
+    function hideNetworkNotice() {
+        const el = document.getElementById('network-notice');
+        if (el) el.style.display = 'none';
+    }
+
+    // データ読み込み失敗時の共通処理：
+    // 通信失敗(Wi-Fi不安定等)なら、アラートで画面を止めず、控えめなお知らせだけ出す。
+    // サーバーからの本物のエラー(トークン切れ等)は、原因が分かるようこれまで通りアラートで知らせる。
+    function handleLoadError(label, err) {
+        if (err && err.isNetworkError) {
+            console.error('通信エラー(' + label + '): ' + err.message);
+            showNetworkNotice();
+            return;
+        }
+        alert('データ取得エラー（' + label + '）: ' + err.message);
+    }
+
+    // 通信が回復したら、自動で最新データを読み込み直す
+    window.addEventListener('online', () => {
+        fetchInitialData();
+        loadHistoryData();
+    });
+
+    async function fetchRecordsFromGitHub() {
+        const json = await fetchJsonWithRetry(`${WORKER_URL}?action=getRecords&t=${Date.now()}`);
+        if (!json.success) throw new Error(json.error || 'データ取得に失敗しました');
+        hideNetworkNotice(); // ← 追加：通信できたので、「通信できませんでした」のお知らせを消す
+        updateTokenExpiryBanner(json.tokenExpiresAt); // ← 追加：トークン期限が近ければ警告を出す
+    
+        // GitHub上の実データは登録順(古い順)で並んでいるため、
+        // 従来通り「新しい順」に統一してから返す
+        //
+        // ← 修正：type:'memo'のレコードはtimestampを持たないため、そのまま比較すると
+        //   new Date(undefined) = Invalid Date となり、比較結果がNaNになってしまう。
+        //   sort()の比較関数がNaNを返すのは未定義動作で、ブラウザによって
+        //   ミルク記録とメモが混在している箇所の並び順が崩れることがあった
+        //   （これが原因で、履歴一覧に反映されない・経過時間がズレる不具合につながっていた）。
+        //   timestampが無いレコードはdateフィールドで代用して、常に有効な値で比較する。
+        const getSortTime = (r) => {
+            if (r.timestamp) return new Date(r.timestamp).getTime();
+            if (r.date) return new Date(r.date).getTime();
+            return 0;
+        };
+        return json.data.sort((a, b) => getSortTime(b) - getSortTime(a));
+    }
+    
+    // 書き込み：Cloudflare Worker経由でGitHubを更新
+    async function callWorkerPost(action, data) {
+        // ← 変更：通信そのものに失敗した場合、ブラウザ標準の「Load failed」ではなく
+        //   何をすればよいか分かるメッセージにする(保存に失敗したことが確実に伝わるように)
+        let res;
+        try {
+            res = await fetch(WORKER_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action, data })
+            });
+        } catch (e) {
+            throw new Error('通信できませんでした。Wi-Fiなどの接続を確認して、もう一度お試しください');
+        }
+        const json = await res.json();
+        if (!json.success) throw new Error(json.error || '不明なエラー');
+        return json;
+    }
+    
+    // GAS呼び出し共通ヘルパー（GET：データ取得系）
+    async function callGasGet(action) {
+        const res = await fetch(`${GAS_URL}?action=${encodeURIComponent(action)}`);
+        const json = await res.json();
+        if (!json.success) throw new Error(json.error || '不明なエラー');
+        return json.data;
+    }
+
+    // GAS呼び出し共通ヘルパー（POST：登録・更新・削除系）
+    // Content-Type を text/plain にすることで、ブラウザの余計な
+    // プリフライト(OPTIONS)リクエストを避けて、GASと直接通信できるようにしている
+    async function callGasPost(action, data) {
+        const res = await fetch(GAS_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ action, data })
+        });
+        const json = await res.json();
+        if (!json.success) throw new Error(json.error || '不明なエラー');
+        return json;
+    }
+
+    // 初期データの読み込み（タイマー用）
+    async function fetchInitialData() {
+        try {
+            const data = await fetchRecordsFromGitHub();
+            allRecords = data;
+            const milkRecords = data.filter(isMilk); // ← 追加
+            if (milkRecords.length > 0) {
+                lastRecordTime = milkRecords[0].timestamp;
+                lastRecordAmount = milkRecords[0].amount;
+                document.getElementById('last-amount').innerText = `${lastRecordAmount}ml`;
+                updateElapsedTime();
+                setDefaultRecordAmount(milkRecords); // ← 追加：直近5回の平均に近い量を初期選択にする
+            } else {
+                lastRecordAmount = null;
+                document.getElementById('last-amount').innerText = '-';
+                document.getElementById('elapsed-time').innerText = 'データなし';
+            }
+        } catch (err) {
+            handleLoadError('初期化時', err);
+        }
+    }
+
+    // 新規登録ボタン
+async function submitRecord() {
+    const timeVal = document.getElementById('record-time').value;
+    const memoVal = document.getElementById('record-memo').value;
+    const amountVal = document.getElementById('record-amount').value;
+    if (!timeVal) return alert('日時を入力してください');
+
+    const record = {
+        timestamp: new Date(timeVal).toISOString(),
+        amount: parseInt(amountVal),
+        memo: memoVal
     };
 
+    // ← 追加：ボタンを無効化して連打を防ぐ
+    const submitBtn = document.querySelector('#page-record .btn');
+    submitBtn.disabled = true;
+    submitBtn.innerText = '登録中...';
+
+    try {
+        const res = await callWorkerPost('addRecord', record);
+
+        // ← 追加：サーバーの反映を待たず、返ってきたレコードをその場でallRecordsに反映する。
+        //    これにより「登録直後に履歴を見るとまだ反映されていない」状態を防ぐ。
+        if (res && res.record) {
+            allRecords.unshift(res.record); // allRecordsは新しい順のため先頭に追加
+            renderHistory(); // 履歴タブが裏で開かれていても最新状態にしておく
+        }
+
+        lastRecordTime = record.timestamp;
+        lastRecordAmount = record.amount;
+        document.getElementById('last-amount').innerText = `${lastRecordAmount}ml`;
+        updateElapsedTime();
+        document.getElementById('record-memo').value = '';
+        recordTimeManuallyChanged = false;
+        recordAmountManuallyChanged = false; // ← 追加：次回入力のため、量もリセットして再計算対象に戻す
+        resetFormTime();
+        showSuccessToast('登録しました！');
+
+        fetchInitialData();
+    } catch (err) {
+        alert('登録に失敗しました。お手数ですがもう一度お試しください。（' + err.message + '）');
+    } finally {
+        // ← 追加：成功・失敗どちらでも必ずボタンを元に戻す
+        submitBtn.disabled = false;
+        submitBtn.innerText = 'この内容で登録';
+    }
+}
+
+
+    // 履歴タブを開いたときのデータ取得
+    async function loadHistoryData() {
+    try {
+        const data = await fetchRecordsFromGitHub();
+        allRecords = data;
+        renderHistory();
+    } catch (err) {
+        handleLoadError('履歴読み込み時', err);
+    }
+}
+
+
     // 履歴と分析の描画
-    window.renderHistory = function() {
+    function renderHistory() {
         document.getElementById('loading-history').style.display = 'none';
 
         const filterEl = document.getElementById('period-filter');
@@ -597,13 +786,25 @@
 
         container.innerHTML = '';
 
-        const cutoffDate = new Date();
-        cutoffDate.setDate(cutoffDate.getDate() - days);
+        // ← 修正：以前は「現在時刻からちょうどN×24時間前」というローリング時刻(timestamp)で
+        //   絞り込んでいたため、棒グラフ側(dateフィールドでその日に属するかを判定し、
+        //   期間の縛りなく全期間を表示するロジック)と基準がズレていた。
+        //   これにより、記録した時刻によっては「グラフには出るのに履歴一覧には出ない」
+        //   という不具合が起きていた。
+        //   ここを、棒グラフと同じ「記録のdateフィールド(JST日付)」基準の判定に統一する。
+        const allowedDateKeys = new Set();
+        for (let i = 0; i < days; i++) {
+            const d = new Date();
+            d.setDate(d.getDate() - i);
+            allowedDateKeys.add(jstDateStr(d));
+        }
 
-        const filtered = allRecords.filter(r => isMilk(r) && new Date(r.timestamp) >= cutoffDate);
+        // 期間フィルター適用（dateフィールド基準。グラフ側と同じ判定にすることで表示のズレを防ぐ）
+        const filtered = allRecords.filter(r => isMilk(r) && allowedDateKeys.has(r.date));
 
+        // 評価（統計）の計算
         calculateStats(filtered);
-        renderWeeklyChart();
+        renderWeeklyChart(); // ← この1行を追加
 
         if (filtered.length === 0) {
             container.innerHTML = '<div class="loading">期間内のデータがありません</div>';
@@ -616,7 +817,7 @@
             div.innerHTML = `
                 <div class="history-info">
                     <span class="history-time">${item.time}</span>
-                    <span class="history-date">${item.date}${item.memo ? ' 💬' + escapeHtml(item.memo) : ''}</span>
+                    <span class="history-date">${item.date}${item.memo ? ' 💬' + item.memo : ''}</span>
                 </div>
                 <div style="display:flex; align-items:center;">
                     <span class="history-amount">${item.amount}ml</span>
@@ -627,46 +828,57 @@
             `;
             container.appendChild(div);
         });
-    };
-
-    function calculateStats(records) {
-        if (records.length === 0) {
-            document.getElementById('stat-avg-amount').innerText = '- ml';
-            document.getElementById('stat-avg-interval').innerText = '-';
-            return;
-        }
-
-        const todayStr = jstDateStr(new Date());
-        const completeDayRecords = records.filter(r => r.date !== todayStr);
-
-        const dateMap = {};
-        completeDayRecords.forEach(r => {
-            dateMap[r.date] = (dateMap[r.date] || 0) + parseInt(r.amount);
-        });
-        const totalDays = Object.keys(dateMap).length;
-        const totalAmount = Object.values(dateMap).reduce((a,b)=>a+b, 0);
-        document.getElementById('stat-avg-amount').innerText = totalDays > 0 ? `${Math.round(totalAmount / totalDays)} ml` : '- ml';
-
-        const sorted = [...records].sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
-        let totalDiffMs = 0;
-        let count = 0;
-        for (let i = 1; i < sorted.length; i++) {
-            const diff = new Date(sorted[i].timestamp) - new Date(sorted[i-1].timestamp);
-            if (diff > 0 && diff < 24 * 3600000) {
-                totalDiffMs += diff;
-                count++;
-            }
-        }
-        if (count > 0) {
-            const avgMs = totalDiffMs / count;
-            const avgHrs = Math.floor(avgMs / 3600000);
-            const avgMins = Math.round((avgMs % 3600000) / 60000);
-            document.getElementById('stat-avg-interval').innerText = `${avgHrs}時間${avgMins}分`;
-        } else {
-            document.getElementById('stat-avg-interval').innerText = '-';
-        }
     }
 
+    // 平均量・平均間隔の計算
+    function calculateStats(records) {
+    if (records.length === 0) {
+        document.getElementById('stat-avg-amount').innerText = '- ml';
+        document.getElementById('stat-avg-interval').innerText = '-';
+        return;
+    }
+
+    // ← 追加：今日(JST)の日付を取得し、平均量の計算からは除外する(今日はまだ完了していない一日のため)
+    const todayStr = jstDateStr(new Date());
+    const completeDayRecords = records.filter(r => r.date !== todayStr);
+
+    // 1日平均量(昨日までの、完了した日だけで計算)
+    const dateMap = {};
+    completeDayRecords.forEach(r => {
+        dateMap[r.date] = (dateMap[r.date] || 0) + parseInt(r.amount);
+    });
+    const totalDays = Object.keys(dateMap).length;
+    const totalAmount = Object.values(dateMap).reduce((a,b)=>a+b, 0);
+    document.getElementById('stat-avg-amount').innerText = totalDays > 0 ? `${Math.round(totalAmount / totalDays)} ml` : '- ml';
+
+    // 平均間隔(今まで通り、当日の記録も含めて計算)
+    const sorted = [...records].sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
+    let totalDiffMs = 0;
+    let count = 0;
+    for (let i = 1; i < sorted.length; i++) {
+        const diff = new Date(sorted[i].timestamp) - new Date(sorted[i-1].timestamp);
+        if (diff > 0 && diff < 24 * 3600000) {
+            totalDiffMs += diff;
+            count++;
+        }
+    }
+    if (count > 0) {
+        const avgMs = totalDiffMs / count;
+        // ← 修正：以前は時間を切り捨て、分を四捨五入と別々に丸めていたため、
+        //   分の丸めで60分になった場合に「3時間60分」のような表記になる不具合があった。
+        //   まず合計を「分」単位で四捨五入してから、あらためて時間と分に分解することで、
+        //   繰り上がりが正しく反映されるようにする。
+        const totalAvgMins = Math.round(avgMs / 60000);
+        const avgHrs = Math.floor(totalAvgMins / 60);
+        const avgMins = totalAvgMins % 60;
+        document.getElementById('stat-avg-interval').innerText = `${avgHrs}時間${avgMins}分`;
+    } else {
+        document.getElementById('stat-avg-interval').innerText = '-';
+    }
+}
+
+
+    // JST(日本時間)基準の "yyyy/MM/dd" 文字列を作る(サーバー側のdateフィールドと形式を合わせるため)
     function jstDateStr(date) {
         const parts = new Intl.DateTimeFormat('en-CA', {
             timeZone: 'Asia/Tokyo', year: 'numeric', month: '2-digit', day: '2-digit'
@@ -675,48 +887,66 @@
         parts.forEach(p => o[p.type] = p.value);
         return `${o.year}/${o.month}/${o.day}`;
     }
-
+    
     function renderWeeklyChart() {
         const container = document.getElementById('weekly-chart');
         const legendContainer = document.getElementById('weekly-chart-legend');
+        const scrollContainer = document.getElementById('chart-scroll-container');
         if (!container) return;
-
-        const days = [];
-        for (let i = 6; i >= 0; i--) {
-            const d = new Date(Date.now() - i * 86400000);
-            days.push(d);
+    
+        // 記録がある最も古い日付〜今日までの、全期間分の日付配列を作る
+        const milkOnly = allRecords.filter(isMilk);
+        let earliestDate = new Date();
+        if (milkOnly.length > 0) {
+            const earliestTimestamp = milkOnly.reduce((min, r) =>
+                new Date(r.timestamp) < new Date(min) ? r.timestamp : min, milkOnly[0].timestamp);
+            earliestDate = new Date(earliestTimestamp);
         }
-
+        earliestDate.setHours(0, 0, 0, 0);
+    
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+    
+        const totalDays = Math.max(Math.round((today - earliestDate) / 86400000) + 1, 7);
+    
+        const days = [];
+        for (let i = totalDays - 1; i >= 0; i--) {
+            days.push(new Date(today.getTime() - i * 86400000));
+        }
+    
+        // 日付ごとに記録をグルーピング
         const byDay = {};
-        allRecords.filter(isMilk).forEach(r => {
+        milkOnly.forEach(r => {
             if (!byDay[r.date]) byDay[r.date] = [];
             byDay[r.date].push(r);
         });
         Object.values(byDay).forEach(arr => arr.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp)));
-
+    
         const dayData = days.map(d => {
             const key = jstDateStr(d);
             const records = byDay[key] || [];
             const total = records.reduce((sum, r) => sum + Number(r.amount), 0);
             return { dateObj: d, key, records, total };
         });
-
+    
         lastChartDayData = dayData;
-
+    
         const maxTotal = Math.max(...dayData.map(d => d.total), 100);
-
-        const width = 340, height = 210;
+    
+        // 1日あたりの幅は固定。日数が増えるほどSVG全体の幅が広がる
+        const dayWidth = 48;
         const marginTop = 20, marginBottom = 34, marginLeft = 10, marginRight = 10;
+        const width = marginLeft + marginRight + dayWidth * totalDays;
+        const height = 210;
         const chartHeight = height - marginTop - marginBottom;
-        const barAreaWidth = (width - marginLeft - marginRight) / 7;
-        const barWidth = barAreaWidth * 0.55;
-
-        let svg = `<svg viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg" style="width:100%; height:auto;">`;
-
+        const barWidth = dayWidth * 0.55;
+    
+        let svg = `<svg viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg" style="height:210px; width:${width}px; display:block;">`;
+    
         dayData.forEach((d, i) => {
-            const x = marginLeft + i * barAreaWidth + (barAreaWidth - barWidth) / 2;
+            const x = marginLeft + i * dayWidth + (dayWidth - barWidth) / 2;
             let yCursor = marginTop + chartHeight;
-
+    
             d.records.forEach((r, sessionIndex) => {
                 const segHeight = (Number(r.amount) / maxTotal) * chartHeight;
                 yCursor -= segHeight;
@@ -725,23 +955,31 @@
                             <title>${r.time} ${r.amount}ml</title>
                         </rect>`;
             });
-
+    
             if (d.total > 0) {
                 const topY = marginTop + chartHeight - (d.total / maxTotal) * chartHeight;
                 svg += `<text x="${x + barWidth / 2}" y="${topY - 4}" font-size="10" text-anchor="middle" fill="#2c3e50">${d.total}</text>`;
             }
-
+    
             const md = `${d.dateObj.getMonth() + 1}/${d.dateObj.getDate()}`;
             const wd = new Intl.DateTimeFormat('ja-JP', { timeZone: 'Asia/Tokyo', weekday: 'short' }).format(d.dateObj);
             svg += `<text x="${x + barWidth / 2}" y="${height - marginBottom + 14}" font-size="10" text-anchor="middle" fill="#7f8c8d">${md}(${wd})</text>`;
-
-            const tapX = marginLeft + i * barAreaWidth;
-            svg += `<rect x="${tapX}" y="${marginTop}" width="${barAreaWidth}" height="${chartHeight}" fill="transparent" style="cursor:pointer;" onclick="openDayDetailModal(${i})"></rect>`;
+    
+            const tapX = marginLeft + i * dayWidth;
+            svg += `<rect x="${tapX}" y="${marginTop}" width="${dayWidth}" height="${chartHeight}" fill="transparent" style="cursor:pointer;" onclick="openDayDetailModal(${i})"></rect>`;
         });
-
+    
         svg += `</svg>`;
         container.innerHTML = svg;
-
+    
+        // 初回表示時は、一番右(直近)が見える位置まで自動スクロール
+        if (scrollContainer) {
+            requestAnimationFrame(() => {
+                scrollContainer.scrollLeft = scrollContainer.scrollWidth;
+            });
+        }
+    
+        // 凡例(モードに応じて内容を切り替え) ※既存のまま
         if (legendContainer) {
             let legendHtml = '';
             if (chartMode === 'timeofday') {
@@ -758,13 +996,15 @@
         }
     }
 
+    // ← 追加：全記録を時系列(古い順)に並べたものを作る（前回との間隔計算に使う）
     function buildSortedRecordsAsc() {
-        return allRecords.filter(isMilk).sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+        return allRecords.filter(isMilk).sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp)); // ← .filter(isMilk)を追加
     }
 
+    // ← 追加：指定した記録の「前回のミルクからの間隔」を文字列で返す(日をまたいでも直前の記録を探す)
     function getIntervalTextFor(record, sortedAsc) {
         const idx = sortedAsc.findIndex(r => r.id === record.id);
-        if (idx <= 0) return null;
+        if (idx <= 0) return null; // それより前の記録がない
         const diffMs = new Date(sortedAsc[idx].timestamp) - new Date(sortedAsc[idx - 1].timestamp);
         if (diffMs <= 0) return null;
         const hrs = Math.floor(diffMs / 3600000);
@@ -772,7 +1012,8 @@
         return `${hrs}時間${mins}分`;
     }
 
-    window.openDayDetailModal = function(dayIndex) {
+    // ← 追加：日別詳細モーダルを開く（グラフの棒タップ時に呼ばれる）
+    function openDayDetailModal(dayIndex) {
         const d = lastChartDayData[dayIndex];
         if (!d) return;
 
@@ -792,17 +1033,17 @@
 
         totalContainer.innerText = `合計 ${d.total}ml（${d.records.length}回）`;
 
-        const sortedAsc = buildSortedRecordsAsc();
+        const sortedAsc = buildSortedRecordsAsc(); // ← 追加：間隔計算のため時系列順を用意
 
         listContainer.innerHTML = '';
         d.records.forEach(r => {
-            const intervalText = getIntervalTextFor(r, sortedAsc);
+            const intervalText = getIntervalTextFor(r, sortedAsc); // ← 追加
             const div = document.createElement('div');
             div.className = 'history-item';
             div.innerHTML = `
                 <div class="history-info">
                     <span class="history-time">${r.time}${intervalText ? ` <span style="font-size:0.75rem; font-weight:normal; color:#7f8c8d;">(前回から${intervalText})</span>` : ''}</span>
-                    <span class="history-date">${r.memo ? '💬' + escapeHtml(r.memo) : ''}</span>
+                    <span class="history-date">${r.memo ? '💬' + r.memo : ''}</span>
                 </div>
                 <span class="history-amount">${r.amount}ml</span>
             `;
@@ -810,13 +1051,15 @@
         });
 
         document.getElementById('day-detail-modal').style.display = 'flex';
-    };
+    }
 
-    window.closeDayDetailModal = function() {
+    // ← 追加：日別詳細モーダルを閉じる
+    function closeDayDetailModal() {
         document.getElementById('day-detail-modal').style.display = 'none';
-    };
-
-    window.openEditModal = function(id) {
+    }
+    
+    // 編集モーダルを開く
+    function openEditModal(id) {
         const item = allRecords.find(r => r.id === id);
         if (!item) return;
         document.getElementById('modal-title').innerText = "記録の編集";
@@ -829,9 +1072,10 @@
         t.setMinutes(t.getMinutes() - t.getTimezoneOffset());
         document.getElementById('edit-time').value = t.toISOString().slice(0, 16);
         document.getElementById('edit-modal').style.display = 'flex';
-    };
+    }
 
-    window.openAddModal = function() {
+    // 過去分追加モーダルを開く
+    function openAddModal() {
         document.getElementById('modal-title').innerText = "過去の記録を追加";
         document.getElementById('edit-id').value = '';
         document.getElementById('edit-amount').value = 100;
@@ -842,58 +1086,72 @@
         now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
         document.getElementById('edit-time').value = now.toISOString().slice(0, 16);
         document.getElementById('edit-modal').style.display = 'flex';
-    };
+    }
 
-    window.closeModal = function() {
+    function closeModal() {
         document.getElementById('edit-modal').style.display = 'none';
-    };
+    }
 
-    window.saveEdit = async function() {
+    // 編集・追加の保存
+    async function saveEdit() {
         const id = document.getElementById('edit-id').value;
         const timeVal = document.getElementById('edit-time').value;
         const amountVal = document.getElementById('edit-amount').value;
         const memoVal = document.getElementById('edit-memo').value;
-
+    
         if (!timeVal) return alert('日時を入力してください');
-
+    
         const record = {
-            id: id || undefined,
+            id: id,
             timestamp: new Date(timeVal).toISOString(),
             amount: parseInt(amountVal),
             memo: memoVal
         };
-
+    
+        const saveBtn = document.getElementById('save-edit-btn'); // ← ここ
+        if (saveBtn) { saveBtn.disabled = true; saveBtn.innerText = '保存中...'; }
+    
         try {
-            if (record.id) {
-                await saveMilkRecord(record);
-            } else {
-                await addMilkRecord(record);
-            }
+            await callWorkerPost('saveRecord', record);
             closeModal();
+            loadHistoryData();
+            fetchInitialData();
         } catch (err) {
             alert('保存エラー: ' + err.message);
+        } finally {
+            if (saveBtn) { saveBtn.disabled = false; saveBtn.innerText = '保存する'; }
         }
-    };
+    }
 
-    window.deleteRecord = async function() {
+    // 削除
+        async function deleteRecord() {
         const id = document.getElementById('edit-id').value;
         if (!id || !confirm('この記録を削除してもよろしいですか？')) return;
-
+    
+        const deleteBtn = document.getElementById('delete-btn'); // ← 追加
+        deleteBtn.disabled = true; // ← 追加
+        deleteBtn.innerText = '削除中...'; // ← 追加
+    
         try {
-            await deleteRecordById(id);
+            await callWorkerPost('deleteRecord', { id });
             closeModal();
+            loadHistoryData();
+            fetchInitialData();
         } catch (err) {
             alert('削除エラー: ' + err.message);
+        } finally {
+            deleteBtn.disabled = false; // ← 追加
+            deleteBtn.innerText = '削除'; // ← 追加
         }
-    };
-
-    window.setChartMode = function(mode) {
+    }
+    function setChartMode(mode) {
         chartMode = mode;
         document.getElementById('mode-btn-session').classList.toggle('active', mode === 'session');
         document.getElementById('mode-btn-time').classList.toggle('active', mode === 'timeofday');
         renderWeeklyChart();
-    };
-
+    }
+    
+    // JSTでの「時」(0〜23)を取得
     function getJSTHour(timestamp) {
         const d = new Date(timestamp);
         const parts = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Tokyo', hour: 'numeric', hour12: false }).formatToParts(d);
@@ -901,7 +1159,8 @@
         if (hour === 24) hour = 0;
         return hour;
     }
-
+    
+    // 現在のモードに応じて、1回分のミルク記録の色を返す
     function getColorForRecord(record, sessionIndex) {
         if (chartMode === 'timeofday') {
             const hour = getJSTHour(record.timestamp);
@@ -910,38 +1169,52 @@
         }
         return sessionPalette[sessionIndex % sessionPalette.length];
     }
-
+    // 「気づいた日」欄の初期値を今日(JST)にセット
     function resetMemoDate() {
         const el = document.getElementById('memo-date');
         if (!el) return;
         el.value = jstDateStr(new Date()).replaceAll('/', '-');
     }
-
-    window.setMemoFilter = function(mode) {
+    
+    // 育児メモタブのデータ読み込み
+    async function loadMemoData() {
+        try {
+            const data = await fetchRecordsFromGitHub();
+            allRecords = data;
+            renderMemoList();
+        } catch (err) {
+            handleLoadError('メモ読み込み時', err);
+        }
+    }
+    
+    // フィルター切り替え(未転記のみ/すべて)
+    function setMemoFilter(mode) {
         memoFilterMode = mode;
         document.getElementById('memo-filter-untranscribed').classList.toggle('active', mode === 'untranscribed');
         document.getElementById('memo-filter-all').classList.toggle('active', mode === 'all');
         renderMemoList();
-    };
-
-    window.renderMemoList = function() {
+    }
+    
+    // メモ一覧の描画(日付ごとに見出しを分ける)
+    function renderMemoList() {
         const onlyUntranscribed = memoFilterMode === 'untranscribed';
         let memos = allRecords.filter(isMemo);
         if (onlyUntranscribed) memos = memos.filter(m => !m.transcribed);
-
+    
+        // 日付の新しい順。同じ日付内はid(作成順)の新しい順
         memos.sort((a, b) => {
             if (a.date !== b.date) return a.date < b.date ? 1 : -1;
             return a.id < b.id ? 1 : -1;
         });
-
+    
         const container = document.getElementById('memo-list-container');
         container.innerHTML = '';
-
+    
         if (memos.length === 0) {
             container.innerHTML = `<div class="loading">${onlyUntranscribed ? '未転記のメモはありません' : 'メモがありません'}</div>`;
             return;
         }
-
+    
         let currentDate = null;
         memos.forEach(m => {
             if (m.date !== currentDate) {
@@ -964,81 +1237,234 @@
             `;
             container.appendChild(div);
         });
-    };
-
-    window.submitMemo = async function() {
+    }
+    
+    // 新規メモの登録
+    async function submitMemo() {
         const dateVal = document.getElementById('memo-date').value;
         const contentVal = document.getElementById('memo-content').value.trim();
         if (!dateVal) return alert('日付を入力してください');
         if (!contentVal) return alert('内容を入力してください');
-
+    
         const submitBtn = document.getElementById('memo-submit-btn');
         submitBtn.disabled = true;
         submitBtn.innerText = '登録中...';
-
+    
         try {
-            await addMemoRecord({ date: dateVal.replaceAll('-', '/'), content: contentVal });
+            await callWorkerPost('addMemo', { date: dateVal.replaceAll('-', '/'), content: contentVal });
             document.getElementById('memo-content').value = '';
             alert('メモを登録しました！');
+            await loadMemoData();
         } catch (err) {
             alert('登録に失敗しました。（' + err.message + '）');
         } finally {
             submitBtn.disabled = false;
             submitBtn.innerText = 'メモを登録';
         }
-    };
-
-    window.toggleMemoTranscribed = async function(id, checked) {
+    }
+    
+    // 「転記済み」チェックボックスの切り替え
+    async function toggleMemoTranscribed(id, checked) {
         const memo = allRecords.find(r => r.id === id && isMemo(r));
         if (!memo) return;
         try {
-            await saveMemoRecord({ id: memo.id, date: memo.date, content: memo.content, transcribed: checked });
+            await callWorkerPost('saveMemo', { id: memo.id, date: memo.date, content: memo.content, transcribed: checked });
+            memo.transcribed = checked;
+            renderMemoList();
         } catch (err) {
             alert('更新に失敗しました。（' + err.message + '）');
             renderMemoList();
         }
-    };
-
-    window.openMemoEditModal = function(id) {
+    }
+    
+    // メモ編集モーダル
+    function openMemoEditModal(id) {
         const m = allRecords.find(r => r.id === id && isMemo(r));
         if (!m) return;
         document.getElementById('memo-edit-id').value = m.id;
         document.getElementById('memo-edit-date').value = m.date.replaceAll('/', '-');
         document.getElementById('memo-edit-content').value = m.content;
         document.getElementById('memo-edit-modal').style.display = 'flex';
-    };
-    window.closeMemoEditModal = function() {
+    }
+    function closeMemoEditModal() {
         document.getElementById('memo-edit-modal').style.display = 'none';
-    };
-    window.saveMemoEdit = async function() {
+    }
+    async function saveMemoEdit() {
         const id = document.getElementById('memo-edit-id').value;
         const dateVal = document.getElementById('memo-edit-date').value;
         const contentVal = document.getElementById('memo-edit-content').value.trim();
         if (!dateVal || !contentVal) return alert('日付と内容を入力してください');
-
+    
         const existing = allRecords.find(r => r.id === id);
         try {
-            await saveMemoRecord({
+            await callWorkerPost('saveMemo', {
                 id,
                 date: dateVal.replaceAll('-', '/'),
                 content: contentVal,
                 transcribed: existing ? existing.transcribed : false
             });
             closeMemoEditModal();
+            await loadMemoData();
         } catch (err) {
             alert('保存エラー: ' + err.message);
         }
-    };
-    window.deleteMemoConfirm = async function() {
+    }
+    async function deleteMemoConfirm() {
         const id = document.getElementById('memo-edit-id').value;
         if (!confirm('このメモを削除してもよろしいですか？')) return;
         try {
-            await deleteRecordById(id);
+            await callWorkerPost('deleteMemo', { id });
             closeMemoEditModal();
+            await loadMemoData();
         } catch (err) {
             alert('削除エラー: ' + err.message);
         }
-    };
+    }
+    
+// ==========================================================
+// LINE設定タブ
+// ==========================================================
+let currentLineConfig = { buttonAmounts: [], notifyEnabled: true, notifyMinutes: 180 };
+
+async function loadLineConfig(silent) {
+    try {
+        const res = await fetch(`${WORKER_URL}?target=config&t=${Date.now()}`);
+        const json = await res.json();
+        if (!json.success) throw new Error(json.error || '設定の取得に失敗しました');
+        currentLineConfig = json.data;
+
+        document.getElementById('notify-enabled').checked = !!currentLineConfig.notifyEnabled;
+        document.getElementById('notify-minutes').value = currentLineConfig.notifyMinutes || 180;
+
+        const settings = currentLineConfig.notifySettings || [
+            { person: 'you', method: 'auto', email: '' },
+            { person: 'wife', method: 'auto', email: '' }
+        ];
+
+        const youSetting = settings.find(s => s.person === 'you') || { method: 'auto', email: '' };
+        const wifeSetting = settings.find(s => s.person === 'wife') || { method: 'auto', email: '' };
+
+        const youRadio = document.querySelector(`input[name="notify-method-you"][value="${youSetting.method}"]`);
+        if (youRadio) youRadio.checked = true;
+        document.getElementById('notify-email-you').value = youSetting.email || '';
+
+        const wifeRadio = document.querySelector(`input[name="notify-method-wife"][value="${wifeSetting.method}"]`);
+        if (wifeRadio) wifeRadio.checked = true;
+        document.getElementById('notify-email-wife').value = wifeSetting.email || '';
+
+        renderLineAmountList();
+    } catch (err) {
+        if (silent) {
+            console.error('設定の読み込みに失敗しました(バックグラウンド取得): ' + err.message);
+        } else {
+            alert('設定の読み込みに失敗しました: ' + err.message);
+        }
+    }
+}
+
+
+function renderLineAmountList() {
+    const container = document.getElementById('line-amount-list');
+    container.innerHTML = '';
+    currentLineConfig.buttonAmounts.forEach((amount, index) => {
+        const row = document.createElement('div');
+        row.style.cssText = 'display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border-color);';
+        row.innerHTML = `
+            <span style="font-weight:bold;">${amount} ml</span>
+            <button onclick="removeLineAmount(${index})" style="background:none; border:none; color:var(--accent-color); font-size:1.1rem; cursor:pointer;">✕</button>
+        `;
+        container.appendChild(row);
+    });
+}
+
+function addLineAmount() {
+    const input = document.getElementById('line-new-amount');
+    const value = parseInt(input.value, 10);
+    if (!value || value <= 0) return alert('正しい数値を入力してください');
+    if (currentLineConfig.buttonAmounts.includes(value)) return alert('すでに追加されている量です');
+
+    currentLineConfig.buttonAmounts.push(value);
+    currentLineConfig.buttonAmounts.sort((a, b) => a - b);
+    input.value = '';
+    renderLineAmountList();
+}
+
+function removeLineAmount(index) {
+    currentLineConfig.buttonAmounts.splice(index, 1);
+    renderLineAmountList();
+}
+
+async function saveLineConfig() {
+    currentLineConfig.notifyEnabled = document.getElementById('notify-enabled').checked;
+    currentLineConfig.notifyMinutes = parseInt(document.getElementById('notify-minutes').value, 10) || 180;
+
+    const youMethod = document.querySelector('input[name="notify-method-you"]:checked');
+    const wifeMethod = document.querySelector('input[name="notify-method-wife"]:checked');
+
+    currentLineConfig.notifySettings = [
+        {
+            person: 'you',
+            method: youMethod ? youMethod.value : 'auto',
+            email: document.getElementById('notify-email-you').value.trim()
+        },
+        {
+            person: 'wife',
+            method: wifeMethod ? wifeMethod.value : 'auto',
+            email: document.getElementById('notify-email-wife').value.trim()
+        }
+    ];
+
+    const statusEl = document.getElementById('line-config-status');
+    statusEl.innerText = '保存中...';
+
+    try {
+        const res = await fetch(WORKER_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'saveConfig', data: currentLineConfig })
+        });
+        const json = await res.json();
+        if (!json.success) throw new Error(json.error || '保存に失敗しました');
+        statusEl.innerText = '保存しました！';
+        setTimeout(() => { statusEl.innerText = ''; }, 2000);
+    } catch (err) {
+        statusEl.innerText = '';
+        alert('保存エラー: ' + err.message);
+    }
+}
+
+// ==========================================================
+// 生後日数の表示
+// ==========================================================
+const BIRTH_DATE = '2026-06-24'; // 誕生日(必要に応じて変更してください)
+
+function updateBabyAge() {
+    const el = document.getElementById('baby-age');
+    if (!el) return;
+
+    const birth = new Date(BIRTH_DATE + 'T00:00:00');
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    birth.setHours(0, 0, 0, 0);
+
+    const diffDays = Math.floor((today - birth) / 86400000) + 1; // 誕生日を1日目とする
+
+    // ○ヶ月＋○日：誕生日と同じ日付が来るたびに1ヶ月加算する暦ベースの数え方
+    let months = (today.getFullYear() - birth.getFullYear()) * 12 + (today.getMonth() - birth.getMonth());
+    if (today.getDate() < birth.getDate()) months--;
+    const anchor = addMonthsClamped(birth, months); // 誕生日からmonthsヶ月後の日付
+    const extraDays = Math.round((today - anchor) / 86400000);
+
+    el.innerText = `👶 生後 ${diffDays}日目（${months}ヶ月${extraDays}日）`;
+}
+
+// 日付にnヶ月を足す。31日生まれで翌月が30日までなどの場合は、その月の末日に丸める
+function addMonthsClamped(date, months) {
+    const y = date.getFullYear();
+    const m = date.getMonth() + months;
+    const lastDay = new Date(y, m + 1, 0).getDate();
+    return new Date(y, m, Math.min(date.getDate(), lastDay));
+}
 </script>
 </body>
 </html>
