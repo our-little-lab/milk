@@ -20,6 +20,26 @@
         .card { background: var(--card-bg); border-radius: 16px; padding: 20px; margin-bottom: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         .timer-box { text-align: center; background: #eef7f9; border-radius: 12px; padding: 12px; margin-bottom: 20px; border-left: 5px solid var(--primary-color); }
         .timer-box span { font-weight: bold; color: var(--primary-color); font-size: 1.25rem; }
+
+        /* ===== ミルク残量メーター（車のガソリンメーター風） ===== */
+        .fuel-wrap { position: relative; margin-top: 12px; }
+        #fuel-svg { display: block; width: 100%; max-width: 240px; margin: 0 auto; }
+        .fuel-info { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 2px; }
+        .fuel-lamp { font-size: 1.5rem; line-height: 1; filter: grayscale(1) opacity(0.3); transition: filter 0.3s; }
+        .fuel-lamp.low { filter: drop-shadow(0 0 4px #f39c12); }
+        .fuel-lamp.empty { filter: drop-shadow(0 0 6px #e74c3c); animation: fuelBlink 1s steps(2, start) infinite; }
+        .fuel-text { text-align: left; line-height: 1.35; }
+        #fuel-percent { font-weight: bold; font-size: 0.95rem; }
+        #fuel-remain { font-size: 0.8rem; color: #7f8c8d; }
+        #fuel-remain.empty { color: #e74c3c; font-weight: bold; animation: fuelBlink 1s steps(2, start) infinite; }
+        .fuel-sparkle { position: absolute; opacity: 0; font-size: 1.2rem; pointer-events: none; }
+        .fuel-sparkle.pop { animation: fuelPop 1.3s ease-out forwards; }
+        @keyframes fuelBlink { 50% { opacity: 0.25; } }
+        @keyframes fuelPop {
+            0%   { opacity: 0; transform: scale(0.3) translateY(8px); }
+            30%  { opacity: 1; transform: scale(1.3) translateY(0); }
+            100% { opacity: 0; transform: scale(0.8) translateY(-16px); }
+        }
         .form-group { margin-bottom: 15px; }
         label { display: block; margin-bottom: 6px; font-weight: bold; font-size: 0.9rem; }
         input[type="datetime-local"] { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 1rem; }
@@ -44,7 +64,7 @@
         .modal-buttons { display: flex; gap: 10px; margin-top: 15px; }
         .modal-buttons .btn { margin-top: 0; }
         .tabs { display: flex; margin-bottom: 15px; background: #e2e8f0; padding: 4px; border-radius: 8px; }
-        .tab { flex: 1; text-align: center; padding: 10px; cursor: pointer; border-radius: 6px; font-weight: bold; font-size: 0.9rem; }
+        .tab { flex: 1; text-align: center; padding: 10px 2px; cursor: pointer; border-radius: 6px; font-weight: bold; font-size: 0.82rem; }
         .tab.active { background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         .page { display: none; }
         .page.active { display: block; }
@@ -72,8 +92,72 @@
         .token-banner.urgent { background: #fdecea; border-color: #e74c3c; color: #8a1f14; }
         .token-banner .token-banner-title { font-weight: bold; font-size: 0.95rem; margin-bottom: 4px; }
         .token-banner .token-banner-steps { font-size: 0.75rem; opacity: 0.85; margin-top: 6px; }
-        /* 通信できなかったときの、控えめなお知らせ(アラートで画面を止めないため) */
-        .network-notice { border-radius: 12px; padding: 10px 14px; margin-bottom: 15px; font-size: 0.8rem; line-height: 1.5; background: #eef1f4; border: 1px solid #b0b8bd; color: #4a5560; }
+    
+        /* ===== 写真で比べる ===== */
+        .pc-ref { text-align: center; }
+        .pc-ref-age { font-size: 1.5rem; font-weight: bold; color: var(--primary-color); }
+        .pc-ref-sub { font-size: 0.8rem; color: #7f8c8d; margin-top: 2px; }
+        .pc-btnrow { display: flex; gap: 6px; margin-top: 12px; }
+        .pc-btn { flex: 1; padding: 10px 4px; border: 1px solid var(--border-color); background: #f0f4f8; border-radius: 8px; font-size: 0.85rem; font-weight: bold; cursor: pointer; color: #2c3e50; }
+        .pc-btn:disabled { opacity: 0.4; cursor: default; }
+        .pc-btn.primary { background: var(--primary-color); color: #fff; border-color: var(--primary-color); }
+        .pc-grid { display: grid; grid-template-columns: 1fr; gap: 12px; margin-top: 12px; }
+        .pc-grid.cols2 { grid-template-columns: 1fr 1fr; gap: 8px; }
+        .pc-card { background: #fff; border: 1px solid var(--border-color); border-radius: 12px; padding: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); min-width: 0; }
+        .pc-head { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 4px; }
+        .pc-dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+        .pc-badge { margin-left: auto; font-size: 0.72rem; padding: 2px 8px; border-radius: 10px; background: #eef3f7; color: #5d6d7e; font-weight: bold; white-space: nowrap; }
+        .pc-badge.exact { background: #e3f6ea; color: #1e8449; }
+        .pc-badge.far { background: #fdf0d5; color: #b9770e; }
+        .pc-sub { font-size: 0.78rem; color: #7f8c8d; margin-bottom: 6px; }
+        .pc-photo { position: relative; border-radius: 10px; overflow: hidden; background: #eef3f7; }
+        .pc-scroll { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+        .pc-scroll::-webkit-scrollbar { display: none; }
+        .pc-slide { flex: 0 0 100%; scroll-snap-align: center; aspect-ratio: 4 / 5; display: flex; align-items: center; justify-content: center; }
+        .pc-img { max-width: 100%; max-height: 100%; object-fit: contain; opacity: 0; transition: opacity 0.3s; cursor: zoom-in; }
+        .pc-img.loaded { opacity: 1; }
+        .pc-img.failed { opacity: 1; font-size: 0.75rem; color: #7f8c8d; }
+        .pc-count { position: absolute; right: 8px; bottom: 8px; background: rgba(0,0,0,0.55); color: #fff; font-size: 0.72rem; padding: 2px 8px; border-radius: 10px; pointer-events: none; }
+        .pc-ctrl { display: flex; gap: 6px; margin-top: 8px; align-items: center; }
+        .pc-ctrl select { flex: 1; min-width: 0; padding: 8px 4px; font-size: 0.78rem; }
+        .pc-step { flex: none; width: 38px; padding: 8px 0; border: 1px solid var(--border-color); background: #f0f4f8; border-radius: 8px; font-size: 0.9rem; cursor: pointer; color: #2c3e50; }
+        .pc-step:disabled { opacity: 0.35; }
+        .pc-grid.cols2 .pc-ctrl { flex-wrap: wrap; }
+        .pc-grid.cols2 .pc-ctrl select { order: 3; flex: 1 1 100%; }
+        .pc-grid.cols2 .pc-step { flex: 1; width: auto; }
+        .pc-empty { text-align: center; color: #7f8c8d; font-size: 0.85rem; padding: 30px 8px; line-height: 1.7; }
+        .pc-foot { text-align: center; margin: 14px 0 4px; font-size: 0.78rem; }
+        .pc-foot a { color: #7f8c8d; text-decoration: underline; cursor: pointer; }
+        .pc-note { font-size: 0.8rem; color: #7f8c8d; line-height: 1.6; margin-bottom: 10px; }
+        .pc-err { color: #c0392b; font-size: 0.85rem; margin-top: 8px; min-height: 1.2em; }
+        #page-photo input[type="text"], #page-photo input[type="url"], #page-photo input[type="password"], .pu input[type="date"] { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 1rem; box-sizing: border-box; }
+        /* 写真の拡大表示 */
+        .pv { display: none; position: fixed; inset: 0; background: #000; z-index: 1200; flex-direction: column; }
+        .pv.open { display: flex; }
+        .pv-top { display: flex; align-items: center; gap: 8px; padding: 12px 14px; padding-top: calc(12px + env(safe-area-inset-top, 0px)); color: #fff; }
+        .pv-cap { flex: 1; font-size: 0.85rem; line-height: 1.4; }
+        .pv-b { background: rgba(255,255,255,0.15); border: none; color: #fff; border-radius: 8px; padding: 8px 12px; font-size: 1rem; cursor: pointer; }
+        .pv-stage { flex: 1; display: flex; align-items: center; justify-content: center; position: relative; min-height: 0; padding-bottom: env(safe-area-inset-bottom, 0px); }
+        .pv-stage img { max-width: 100%; max-height: 100%; object-fit: contain; }
+        .pv-nav { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.18); color: #fff; border: none; width: 42px; height: 56px; font-size: 1.8rem; border-radius: 10px; cursor: pointer; }
+        .pv-prev { left: 6px; }
+        .pv-next { right: 6px; }
+        /* 写真の追加 */
+        .pu { display: none; position: fixed; inset: 0; background: #f7f9fb; z-index: 1100; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+        .pu.open { display: block; }
+        .pu-inner { max-width: 600px; margin: 0 auto; padding: 16px; padding-top: calc(16px + env(safe-area-inset-top, 0px)); padding-bottom: 60px; }
+        .pu-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; font-size: 1.1rem; }
+        .pu-children { display: flex; gap: 8px; margin-bottom: 12px; }
+        .pu-child { flex: 1; padding: 12px 4px; border-radius: 10px; border: 2px solid var(--border-color); background: #fff; font-weight: bold; font-size: 0.95rem; cursor: pointer; color: #2c3e50; }
+        .pu-child.sel { border-color: var(--primary-color); background: #eaf3f8; }
+        .pu-row { display: flex; gap: 10px; align-items: center; background: #fff; border: 1px solid var(--border-color); border-radius: 10px; padding: 8px; margin-top: 8px; }
+        .pu-thumb { width: 64px; height: 64px; object-fit: cover; border-radius: 8px; flex: none; background: #eef3f7; }
+        .pu-mid { flex: 1; min-width: 0; }
+        .pu-info { font-size: 0.78rem; color: #7f8c8d; margin-top: 4px; }
+        .pu-info.bad { color: #c0392b; font-weight: bold; }
+        .pu-x { background: none; border: none; font-size: 1.1rem; color: #95a5a6; padding: 6px; cursor: pointer; }
+        .pu-state { font-size: 1.1rem; flex: none; }
+        #pu-status { margin: 12px 0 0; font-size: 0.85rem; color: #5d6d7e; min-height: 1.2em; }
     </style>
     <!-- ファビコン -->
 <link rel="icon" type="image/png" href="icon.png">
@@ -100,13 +184,11 @@
         <div class="tab" onclick="switchTab('history')">履歴</div>
         <div class="tab" onclick="switchTab('memo')">育児メモ</div>
         <div class="tab" onclick="switchTab('line')">通知</div>
+        <div class="tab" onclick="switchTab('photo')">写真</div>
     </div>
 
     <!-- GitHubトークンの期限が近づいたときだけ表示される警告(普段は非表示) -->
     <div id="token-expiry-banner" class="token-banner" style="display:none;"></div>
-
-    <!-- 通信できなかったときだけ表示されるお知らせ(通信が回復すると自動で消える) -->
-    <div id="network-notice" class="network-notice" style="display:none;">📡 通信できませんでした。表示中のデータは古い可能性があります。通信が回復すると自動で更新します。</div>
 
     <div id="page-record" class="page active">
         <div class="card">
@@ -114,6 +196,24 @@
                 <span id="baby-age" style="display:block; font-size:0.9rem; color:#7f8c8d; margin-bottom:6px;"></span>
                 前回の🍼から <span id="elapsed-time">計算中...</span> 経過<br>
                 <span style="font-size:0.85rem; color:#7f8c8d;">前回の量: <span id="last-amount">-</span></span>
+                <!-- 車のガソリンメーター風の「ミルク残量」表示（通知時間で空になる） -->
+                <div class="fuel-wrap">
+                    <svg id="fuel-svg" viewBox="0 0 200 122" role="img" aria-label="ミルク残量メーター"></svg>
+                    <div id="fuel-sparkles">
+                        <div class="fuel-sparkle" style="left:14%; top:10%;">✨</div>
+                        <div class="fuel-sparkle" style="left:80%; top:6%;">✨</div>
+                        <div class="fuel-sparkle" style="left:46%; top:-4%;">🍼</div>
+                        <div class="fuel-sparkle" style="left:68%; top:44%;">✨</div>
+                        <div class="fuel-sparkle" style="left:24%; top:46%;">✨</div>
+                    </div>
+                    <div class="fuel-info">
+                        <div id="fuel-lamp" class="fuel-lamp">⛽</div>
+                        <div class="fuel-text">
+                            <div id="fuel-percent">ミルク残量 --%</div>
+                            <div id="fuel-remain"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
             <h2>ミルク記録</h2>
             <div class="form-group">
@@ -194,6 +294,45 @@
             <div id="memo-list-container"></div>
         </div>
     </div>
+    <!-- 写真で比べる：上の子たちの「同じ生後日数」の写真を並べて見るページ -->
+    <div id="page-photo" class="page">
+        <div id="photo-setup" class="card" style="display:none;">
+            <h2>写真の設定</h2>
+            <div class="pc-note">写真は非公開の保管場所に入っています。写真用Workerの「URL」と「合言葉」を、この端末に1回だけ登録します。</div>
+            <div class="form-group">
+                <label for="photo-url-input">写真用WorkerのURL</label>
+                <input type="url" id="photo-url-input" placeholder="https://〜.workers.dev" autocapitalize="off" autocorrect="off">
+            </div>
+            <div class="form-group">
+                <label for="photo-key-input">合言葉</label>
+                <input type="password" id="photo-key-input" autocapitalize="off" autocorrect="off">
+            </div>
+            <button class="btn" onclick="savePhotoSetup()">登録して開く</button>
+            <div class="pc-err" id="photo-setup-msg"></div>
+        </div>
+        <div id="photo-main" style="display:none;">
+            <div class="card">
+                <div class="pc-ref">
+                    <div class="pc-ref-age" id="pc-ref-age"></div>
+                    <div class="pc-ref-sub" id="pc-ref-sub"></div>
+                </div>
+                <div class="pc-btnrow">
+                    <button class="pc-btn" onclick="photoShift(-7)">−7日</button>
+                    <button class="pc-btn" onclick="photoShift(-1)">◀ 前日</button>
+                    <button class="pc-btn" onclick="photoShift(1)">翌日 ▶</button>
+                    <button class="pc-btn" onclick="photoShift(7)">+7日</button>
+                </div>
+                <div class="pc-btnrow">
+                    <button class="pc-btn" id="pc-today" onclick="photoShift(0, true)">今日に戻る</button>
+                    <button class="pc-btn" id="pc-cols" onclick="togglePhotoCols()">2列で見る</button>
+                    <button class="pc-btn primary" onclick="openPhotoUpload()">＋写真を追加</button>
+                </div>
+            </div>
+            <div id="pc-grid" class="pc-grid"></div>
+            <div class="pc-foot"><a onclick="showPhotoSetup('')">写真サーバーの設定</a></div>
+        </div>
+    </div>
+
     <div id="page-line" class="page">
         <!-- LINEボタンの量設定は非表示（LINE通知時のボタンは記録タブの初期量から自動算出するため、手動設定は不要） -->
         <div class="card" style="display:none;">
@@ -338,6 +477,35 @@
     </div>
 </div>
 
+<!-- 写真の拡大表示 -->
+<div class="pv" id="photo-viewer">
+    <div class="pv-top">
+        <div class="pv-cap" id="pv-cap"></div>
+        <button class="pv-b" onclick="photoViewerDelete()" aria-label="この写真を削除">🗑</button>
+        <button class="pv-b" onclick="closePhotoViewer()" aria-label="閉じる">✕</button>
+    </div>
+    <div class="pv-stage" id="pv-stage">
+        <img id="pv-img" alt="">
+        <button class="pv-nav pv-prev" id="pv-prev" onclick="photoViewerStep(-1)">‹</button>
+        <button class="pv-nav pv-next" id="pv-next" onclick="photoViewerStep(1)">›</button>
+    </div>
+</div>
+
+<!-- 写真の追加 -->
+<div class="pu" id="photo-upload">
+    <div class="pu-inner">
+        <div class="pu-head"><b>写真を追加</b><button class="pc-btn" style="flex:none; padding:8px 14px;" onclick="closePhotoUpload()">閉じる</button></div>
+        <label>だれの写真？</label>
+        <div class="pu-children" id="pu-children"></div>
+        <button class="pc-btn" style="width:100%; padding:14px;" onclick="document.getElementById('pu-file').click()">📷 写真を選ぶ（複数OK）</button>
+        <input type="file" id="pu-file" accept="image/*" multiple style="display:none;" onchange="photoFilesChosen(this)">
+        <div class="pc-note" style="margin-top:8px;">撮影日が写真に入っていれば自動で読み取ります。日付は下で直せます。写真は縮小してから保存されます。</div>
+        <div id="pu-list"></div>
+        <div id="pu-status"></div>
+        <button class="pc-btn primary" id="pu-go" style="width:100%; padding:14px; margin-top:10px;" onclick="photoUploadAll()" disabled>アップロード</button>
+    </div>
+</div>
+
 <script>
     // ==========================================================
     // ここにあなたのGASウェブアプリのURL(/exec で終わるもの)を設定してください
@@ -453,17 +621,23 @@ document.addEventListener('visibilitychange', () => {
     }
 
     // 登録完了トースト：OKボタンを押さなくても2秒後に自動で閉じる
+    // ← 変更：閉じた「あと」に実行したい処理(onClosed)を渡せるようにした（満タン演出が重ならないように）
     let successToastTimer = null;
-    function showSuccessToast(message) {
+    let successToastOnClosed = null;
+    function showSuccessToast(message, onClosed) {
         const modal = document.getElementById('success-toast');
         const msgEl = document.getElementById('success-toast-message');
-        if (!modal || !msgEl) return;
+        if (!modal || !msgEl) { if (onClosed) onClosed(); return; }
         msgEl.innerText = message;
         modal.style.display = 'flex';
+        successToastOnClosed = onClosed || null;
 
         if (successToastTimer) clearTimeout(successToastTimer);
         successToastTimer = setTimeout(() => {
             modal.style.display = 'none';
+            const cb = successToastOnClosed;
+            successToastOnClosed = null;
+            if (cb) cb();
         }, 2000);
     }
 
@@ -477,12 +651,13 @@ document.addEventListener('visibilitychange', () => {
     // タブ切り替え
     // 既存のswitchTab関数を、以下の内容に置き換え
     function switchTab(tabName) {
-        const order = ['record', 'history', 'memo', 'line'];
+        const order = ['record', 'history', 'memo', 'line', 'photo'];
         document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', order[i] === tabName));
         document.getElementById('page-record').classList.toggle('active', tabName === 'record');
         document.getElementById('page-history').classList.toggle('active', tabName === 'history');
         document.getElementById('page-memo').classList.toggle('active', tabName === 'memo');
         document.getElementById('page-line').classList.toggle('active', tabName === 'line');
+        document.getElementById('page-photo').classList.toggle('active', tabName === 'photo');
     
         if (tabName === 'history') {
             loadHistoryData();
@@ -492,6 +667,8 @@ document.addEventListener('visibilitychange', () => {
             loadMemoData();
         } else if (tabName === 'line') {
             loadLineConfig();
+        } else if (tabName === 'photo') {
+            initPhotoTab();
         }
     }
 
@@ -502,33 +679,228 @@ document.addEventListener('visibilitychange', () => {
         if (!lastRecordTime) {
             elapsedEl.innerText = '--時間--分';
             elapsedEl.style.color = '';
+            updateFuelGauge(null, 0);
             return;
         }
+        const notifyMs = (currentLineConfig.notifyMinutes || 180) * 60000;
         const diffMs = new Date() - new Date(lastRecordTime);
         if (diffMs < 0) {
             elapsedEl.innerText = '0分';
             elapsedEl.style.color = '';
+            updateFuelGauge(1, notifyMs);
             return;
         }
         const diffHrs = Math.floor(diffMs / 3600000);
         const diffMins = Math.floor((diffMs % 3600000) / 60000);
         elapsedEl.innerText = `${diffHrs}時間${diffMins}分`;
 
-        // ← 変更：文字色のしきい値を固定値(2時間/3時間)ではなく、
-        //   通知設定の「何分経過したら通知するか」(currentLineConfig.notifyMinutes)から動的に算出する。
-        //   赤＝設定時間そのものに到達した時点。
-        //   オレンジ＝赤のしきい値の2/3経過した時点
-        //   （この比率は、以前の「3時間で赤・2時間でオレンジ」の関係と同じになるよう決めている。
-        //     そのため通知設定が初期値の180分(3時間)のままなら、これまでと全く同じ見た目になる）。
-        const redThresholdMs = (currentLineConfig.notifyMinutes || 180) * 60000;
-        const orangeThresholdMs = redThresholdMs * (2 / 3);
+        // ← 変更：3色(通常/オレンジ/赤)の段階表示をやめ、経過に合わせて色が少しずつ変わるグラデーションにした。
+        //   基準は従来どおり、通知設定の「何分経過したら通知するか」(currentLineConfig.notifyMinutes)。
+        //   進み具合(0〜1)＝経過時間 ÷ 通知時間。1(=通知時間ちょうど)で赤になる。
+        //   緑 → 黄緑 → 黄 → オレンジ → 赤 と変化し、通知時間を過ぎたらさらに濃い赤へ(通知時間の1.5倍で最大)。
+        elapsedEl.style.color = elapsedColor(diffMs / notifyMs);
 
-        if (diffMs >= redThresholdMs) {
-            elapsedEl.style.color = '#e74c3c';
-        } else if (diffMs >= orangeThresholdMs) {
-            elapsedEl.style.color = '#f39c12';
-        } else {
-            elapsedEl.style.color = '';
+        // ← 追加：ガソリンメーター風の残量表示。直後=満タン(1)、通知時間=空(0)。
+        //   「あと○時間○分」は、経過表示(分未満切り捨て)と足して通知時間ぴったりになるよう、
+        //   経過を分単位に切り捨てた値から引いて求める（秒まで含めて引くと、合計が1分足りなく見えるため）。
+        const elapsedWholeMs = Math.floor(diffMs / 60000) * 60000;
+        updateFuelGauge(Math.max(0, 1 - diffMs / notifyMs), Math.max(0, notifyMs - elapsedWholeMs));
+    }
+
+    // ==========================================================
+    // ミルク残量メーター（車のガソリンメーター風）
+    //   f = 残量(0=空っぽ E, 1=満タン F)。針は E(左) から F(右) へ 180度で振れる。
+    // ==========================================================
+    const FUEL_CX = 100, FUEL_CY = 102, FUEL_R = 78;
+    const fuelGauge = { built: false, f: 0, target: 0, started: false, busy: false, celebrating: false, token: 0, refillId: 0, remainMs: 0 };
+
+    function fuelPoint(f, r) {
+        const a = Math.PI * (1 - f); // f=0 で真左、f=1 で真右
+        return [FUEL_CX + r * Math.cos(a), FUEL_CY - r * Math.sin(a)];
+    }
+
+    function ensureFuelGauge() {
+        if (fuelGauge.built) return;
+        const svg = document.getElementById('fuel-svg');
+        if (!svg) return;
+        // 色の帯（空に近いほど赤、満タンに近いほど緑）
+        const bands = [[0, 0.2, '#e74c3c'], [0.2, 0.45, '#f39c12'], [0.45, 0.65, '#e2b007'], [0.65, 1, '#27ae60']];
+        let html = '';
+        bands.forEach(([f0, f1, color]) => {
+            const [x0, y0] = fuelPoint(f0 + 0.004, FUEL_R);
+            const [x1, y1] = fuelPoint(f1 - 0.004, FUEL_R);
+            html += `<path d="M ${x0.toFixed(2)} ${y0.toFixed(2)} A ${FUEL_R} ${FUEL_R} 0 0 1 ${x1.toFixed(2)} ${y1.toFixed(2)}" fill="none" stroke="${color}" stroke-width="14"/>`;
+        });
+        // 目盛り（8分割。E・1/2・F は長め）
+        for (let i = 0; i <= 8; i++) {
+            const f = i / 8;
+            const long = (i === 0 || i === 4 || i === 8);
+            const [x0, y0] = fuelPoint(f, long ? 60 : 64);
+            const [x1, y1] = fuelPoint(f, 68);
+            html += `<line x1="${x0.toFixed(2)}" y1="${y0.toFixed(2)}" x2="${x1.toFixed(2)}" y2="${y1.toFixed(2)}" stroke="#7f8c8d" stroke-width="${long ? 2 : 1}" stroke-linecap="round"/>`;
+        }
+        html += `<text x="22" y="119" text-anchor="middle" font-size="12" font-weight="bold" fill="#e74c3c">E</text>`;
+        html += `<text x="178" y="119" text-anchor="middle" font-size="12" font-weight="bold" fill="#27ae60">F</text>`;
+        html += `<text x="100" y="11" text-anchor="middle" font-size="9" fill="#7f8c8d">1/2</text>`;
+        // 針（真左=E を向いた状態で描き、回転で動かす）と中心の軸
+        html += `<g id="fuel-needle" transform="rotate(0 ${FUEL_CX} ${FUEL_CY})"><polygon points="${FUEL_CX - 68},${FUEL_CY} ${FUEL_CX},${FUEL_CY - 3.5} ${FUEL_CX},${FUEL_CY + 3.5}" fill="#e74c3c"/></g>`;
+        html += `<circle cx="${FUEL_CX}" cy="${FUEL_CY}" r="7" fill="#34495e"/><circle cx="${FUEL_CX}" cy="${FUEL_CY}" r="2.5" fill="#ecf0f1"/>`;
+        svg.innerHTML = html;
+        fuelGauge.built = true;
+        setNeedle(0);
+    }
+
+    function setNeedle(f) {
+        const needle = document.getElementById('fuel-needle');
+        if (!needle) return;
+        f = Math.max(-0.02, Math.min(1.08, f)); // 勢い余って少しだけ振り切れる分だけ許容
+        fuelGauge.f = f;
+        needle.setAttribute('transform', `rotate(${(f * 180).toFixed(2)} ${FUEL_CX} ${FUEL_CY})`);
+    }
+
+    const fuelEaseOutBack = t => { const c1 = 1.2, c3 = c1 + 1; return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2); };
+    const fuelEaseOutQuad = t => 1 - (1 - t) * (1 - t);
+    const fuelEaseInOut = t => t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+    const fuelSleep = ms => new Promise(r => setTimeout(r, ms));
+
+    // 針を from → to へ動かす。別の動きが始まったら、その時点で中断して終わる
+    function animateNeedle(from, to, ms, ease) {
+        return new Promise(resolve => {
+            const my = ++fuelGauge.token;
+            const t0 = performance.now();
+            function step(now) {
+                if (fuelGauge.token !== my) return resolve();
+                const t = Math.min(1, (now - t0) / ms);
+                setNeedle(from + (to - from) * ease(t));
+                if (t < 1) requestAnimationFrame(step); else resolve();
+            }
+            requestAnimationFrame(step);
+        });
+    }
+
+    function setFuelText(percentText, remainText, color, remainEmpty) {
+        const p = document.getElementById('fuel-percent');
+        const r = document.getElementById('fuel-remain');
+        if (!p || !r) return;
+        if (p.innerText !== percentText) p.innerText = percentText;
+        if (color !== undefined) p.style.color = color;
+        if (r.innerText !== remainText) r.innerText = remainText;
+        r.classList.toggle('empty', !!remainEmpty);
+    }
+
+    function updateFuelGauge(f, remainMs) {
+        ensureFuelGauge();
+        if (!fuelGauge.built) return;
+        const lamp = document.getElementById('fuel-lamp');
+
+        if (f === null) { // 記録がまだ読み込めていない／無いとき
+            setFuelText('ミルク残量 --%', '', '', false);
+            if (lamp) lamp.className = 'fuel-lamp';
+            return;
+        }
+        fuelGauge.target = f;
+        fuelGauge.remainMs = remainMs;
+
+        if (!fuelGauge.celebrating) {
+            // 通知時間の前に「0%」と出ないよう、まだ空でない(f>0)間は最低1%と表示する
+            const pct = f > 0 ? Math.max(1, Math.round(f * 100)) : 0;
+            if (f <= 0) {
+                setFuelText('ミルク残量 0%', 'ガス欠！ミルクの時間です', elapsedColor(2), true);
+            } else {
+                const h = Math.floor(remainMs / 3600000);
+                const m = Math.floor((remainMs % 3600000) / 60000);
+                setFuelText(`ミルク残量 ${pct}%`, h > 0 ? `あと${h}時間${m}分` : `あと${m}分`, elapsedColor(1 - f), false);
+            }
+            if (lamp) lamp.className = 'fuel-lamp' + (f <= 0 ? ' empty' : (f <= 0.25 ? ' low' : ''));
+        }
+
+        if (fuelGauge.busy) return; // 演出中は、針を動かさずに目標値だけ覚えておく
+
+        if (!fuelGauge.started) {
+            // 起動時の演出：針が空っぽ(E)から今の残量までスッと上がってくる
+            fuelGauge.started = true;
+            fuelGauge.busy = true;
+            animateNeedle(0, f, 1300, fuelEaseOutBack).then(() => {
+                fuelGauge.busy = false;
+                setNeedle(fuelGauge.target);
+            });
+            return;
+        }
+        setNeedle(f);
+    }
+
+    // 登録直後〜演出開始までの間、針と文字を今のまま据え置く（モーダルの裏で先に満タンになってしまわないように）
+    function holdFuelGauge() {
+        ensureFuelGauge();
+        fuelGauge.started = true;
+        fuelGauge.busy = true;
+        fuelGauge.celebrating = true;
+    }
+
+    // ミルクをあげた直後の演出：いったん空っぽ(E)まで落ちて、一気に満タン(F)へ。その後、実際の残量に落ち着く
+    async function playFuelRefill() {
+        ensureFuelGauge();
+        if (!fuelGauge.built) return;
+        const g = fuelGauge;
+        const id = ++g.refillId;
+        g.busy = true;
+        g.celebrating = true;
+        g.started = true;
+        const lamp = document.getElementById('fuel-lamp');
+        if (lamp) lamp.className = 'fuel-lamp';
+        setFuelText('給油中… ⛽', '', '', false);
+
+        try {
+            await animateNeedle(g.f, 0, 250, fuelEaseOutQuad);          // 空っぽへ
+            if (id !== g.refillId) return;
+            await animateNeedle(0, 1, 1000, fuelEaseOutBack);           // 一気に満タン（少し振り切れる）
+            if (id !== g.refillId) return;
+
+            setFuelText('🎉 満タン！', '', '#27ae60', false);
+            document.querySelectorAll('.fuel-sparkle').forEach((el, i) => {
+                el.classList.remove('pop');
+                void el.offsetWidth; // アニメーションを最初からやり直すための合図
+                el.style.animationDelay = (i * 0.12) + 's';
+                el.classList.add('pop');
+            });
+            await fuelSleep(1500);
+            if (id !== g.refillId) return;
+
+            g.celebrating = false;
+            updateFuelGauge(g.target, g.remainMs); // 文字を実際の残量に戻す
+            await animateNeedle(g.f, g.target, 900, fuelEaseInOut);     // 実際の残量へ落ち着く
+        } finally {
+            if (id === g.refillId) {
+                g.celebrating = false;
+                g.busy = false;
+                setNeedle(g.target);
+                updateFuelGauge(g.target, g.remainMs);
+            }
+        }
+    }
+
+    // 経過の進み具合(0=直後, 1=通知時間ちょうど)から、文字色を返す
+    // 色の段階を変えたいときは、この stops の数字(位置)と色を書き換えるだけでOK
+    function elapsedColor(progress) {
+        const stops = [
+            [0.00, [39, 174, 96]],    // 緑      ：あげた直後
+            [0.35, [140, 180, 40]],   // 黄緑
+            [0.55, [226, 176, 7]],    // 黄
+            [0.75, [243, 156, 18]],   // オレンジ
+            [1.00, [231, 76, 60]],    // 赤      ：通知時間ちょうど
+            [1.50, [170, 25, 25]]     // 濃い赤  ：通知時間をかなり過ぎた
+        ];
+        if (!isFinite(progress) || progress <= 0) return `rgb(${stops[0][1].join(',')})`;
+        const last = stops[stops.length - 1];
+        if (progress >= last[0]) return `rgb(${last[1].join(',')})`;
+        for (let i = 1; i < stops.length; i++) {
+            if (progress <= stops[i][0]) {
+                const [p0, c0] = stops[i - 1];
+                const [p1, c1] = stops[i];
+                const t = (progress - p0) / (p1 - p0);
+                const rgb = c0.map((v, k) => Math.round(v + (c1[k] - v) * t));
+                return `rgb(${rgb.join(',')})`;
+            }
         }
     }
 
@@ -568,68 +940,10 @@ document.addEventListener('visibilitychange', () => {
         el.style.display = 'block';
     }
 
-    // ==========================================================
-    // 通信エラー(Wi-Fi不安定・スリープ復帰直後など)への対応
-    // ==========================================================
-    // 通信そのものに失敗したときは、最大4回まで自動で再試行する(待ち時間は1.5秒→3秒→5秒と延ばす)。
-    // iPhoneでは、アプリをバックグラウンドから戻した直後はWi-Fi接続の復帰が遅れて、
-    // 最初の通信が失敗することがあるため、数秒待ってから再試行できるようにしている。
-    // 15秒応答が無い場合も、通信失敗として扱う(回線が不安定なときに延々待たされないため)。
-    // それでも失敗したら、isNetworkError=true の例外を投げる。
-    // (サーバーが「エラーです」と返してきた場合は、通信は成功しているのでこの対象ではない)
-    async function fetchJsonWithRetry(url) {
-        const maxAttempts = 4;
-        const waitMs = [1500, 3000, 5000]; // 失敗した試行のあとに待つ時間
-        let lastErr = null;
-        for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-            const controller = new AbortController();
-            const timer = setTimeout(() => controller.abort(), 15000);
-            try {
-                const res = await fetch(url, { signal: controller.signal });
-                clearTimeout(timer);
-                return await res.json();
-            } catch (e) {
-                clearTimeout(timer);
-                lastErr = e;
-                if (attempt < maxAttempts) await new Promise(r => setTimeout(r, waitMs[attempt - 1]));
-            }
-        }
-        const err = new Error('通信できませんでした（' + (lastErr && lastErr.message ? lastErr.message : '不明') + '）');
-        err.isNetworkError = true;
-        throw err;
-    }
-
-    function showNetworkNotice() {
-        const el = document.getElementById('network-notice');
-        if (el) el.style.display = 'block';
-    }
-    function hideNetworkNotice() {
-        const el = document.getElementById('network-notice');
-        if (el) el.style.display = 'none';
-    }
-
-    // データ読み込み失敗時の共通処理：
-    // 通信失敗(Wi-Fi不安定等)なら、アラートで画面を止めず、控えめなお知らせだけ出す。
-    // サーバーからの本物のエラー(トークン切れ等)は、原因が分かるようこれまで通りアラートで知らせる。
-    function handleLoadError(label, err) {
-        if (err && err.isNetworkError) {
-            console.error('通信エラー(' + label + '): ' + err.message);
-            showNetworkNotice();
-            return;
-        }
-        alert('データ取得エラー（' + label + '）: ' + err.message);
-    }
-
-    // 通信が回復したら、自動で最新データを読み込み直す
-    window.addEventListener('online', () => {
-        fetchInitialData();
-        loadHistoryData();
-    });
-
     async function fetchRecordsFromGitHub() {
-        const json = await fetchJsonWithRetry(`${WORKER_URL}?action=getRecords&t=${Date.now()}`);
+        const res = await fetch(`${WORKER_URL}?action=getRecords&t=${Date.now()}`);
+        const json = await res.json();
         if (!json.success) throw new Error(json.error || 'データ取得に失敗しました');
-        hideNetworkNotice(); // ← 追加：通信できたので、「通信できませんでした」のお知らせを消す
         updateTokenExpiryBanner(json.tokenExpiresAt); // ← 追加：トークン期限が近ければ警告を出す
     
         // GitHub上の実データは登録順(古い順)で並んでいるため、
@@ -651,18 +965,11 @@ document.addEventListener('visibilitychange', () => {
     
     // 書き込み：Cloudflare Worker経由でGitHubを更新
     async function callWorkerPost(action, data) {
-        // ← 変更：通信そのものに失敗した場合、ブラウザ標準の「Load failed」ではなく
-        //   何をすればよいか分かるメッセージにする(保存に失敗したことが確実に伝わるように)
-        let res;
-        try {
-            res = await fetch(WORKER_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action, data })
-            });
-        } catch (e) {
-            throw new Error('通信できませんでした。Wi-Fiなどの接続を確認して、もう一度お試しください');
-        }
+        const res = await fetch(WORKER_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action, data })
+        });
         const json = await res.json();
         if (!json.success) throw new Error(json.error || '不明なエラー');
         return json;
@@ -708,7 +1015,7 @@ document.addEventListener('visibilitychange', () => {
                 document.getElementById('elapsed-time').innerText = 'データなし';
             }
         } catch (err) {
-            handleLoadError('初期化時', err);
+            alert('データ取得エラー（初期化時）: ' + err.message);
         }
     }
 
@@ -743,12 +1050,13 @@ async function submitRecord() {
         lastRecordTime = record.timestamp;
         lastRecordAmount = record.amount;
         document.getElementById('last-amount').innerText = `${lastRecordAmount}ml`;
+        holdFuelGauge(); // ← 追加：モーダルが閉じるまで、メーターは今の状態のまま待たせる
         updateElapsedTime();
         document.getElementById('record-memo').value = '';
         recordTimeManuallyChanged = false;
         recordAmountManuallyChanged = false; // ← 追加：次回入力のため、量もリセットして再計算対象に戻す
         resetFormTime();
-        showSuccessToast('登録しました！');
+        showSuccessToast('登録しました！', playFuelRefill); // ← 変更：モーダルが閉じたあとに、空っぽから一気に満タンになる演出
 
         fetchInitialData();
     } catch (err) {
@@ -768,7 +1076,7 @@ async function submitRecord() {
         allRecords = data;
         renderHistory();
     } catch (err) {
-        handleLoadError('履歴読み込み時', err);
+        alert('データ取得エラー（履歴読み込み時）: ' + err.message);
     }
 }
 
@@ -1183,7 +1491,7 @@ async function submitRecord() {
             allRecords = data;
             renderMemoList();
         } catch (err) {
-            handleLoadError('メモ読み込み時', err);
+            alert('データ取得エラー（メモ読み込み時）: ' + err.message);
         }
     }
     
@@ -1464,6 +1772,549 @@ function addMonthsClamped(date, months) {
     const m = date.getMonth() + months;
     const lastDay = new Date(y, m + 1, 0).getDate();
     return new Date(y, m, Math.min(date.getDate(), lastDay));
+}
+</script>
+<script>
+// ==========================================================
+// 写真で比べる：上の子たちの「同じ生後日数」の写真を並べて見る
+//   ・写真は非公開のR2に保存（写真用Worker経由）。URLと合言葉はこの端末に保存。
+//   ・生後日数は、誕生日を1日目として数える（トップの「生後○日目」と同じ）。
+// ==========================================================
+const SIBLINGS = [
+    { id: 'hatsume', name: 'はつめ', birth: '2015-12-13', color: '#e67e22' },
+    { id: 'fumino',  name: 'ふみの', birth: '2017-07-27', color: '#8e44ad' },
+    { id: 'iori',    name: 'いおり', birth: '2020-06-25', color: '#16a085' }
+];
+const PHOTO_MAX_EDGE = 1400;      // 保存する写真の長辺(px)
+const PHOTO_JPEG_QUALITY = 0.82;
+const PHOTO_FAR_DAYS = 14;        // 基準の日とこれ以上離れていたら「離れています」と表示
+
+function lsGet(k) { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } }
+function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+
+const photoState = {
+    url: lsGet('milkPhotoUrl'),
+    key: lsGet('milkPhotoKey'),
+    index: null,        // { 子どもID: { 'yyyy-mm-dd': [写真ID, ...] } }
+    indexJson: '',
+    rendered: false,
+    offset: 0,          // 基準の生後日数を、今日からずらした日数
+    picks: {},          // 子どもごとに「この日付を見る」と選んだ日付
+    cols: lsGet('milkPhotoCols') === '2' ? 2 : 1,
+    viewer: null,
+    uploadChild: '',
+    uploadItems: [],
+    uploading: false
+};
+const photoBlobCache = new Map();
+
+// ---------- 日付の計算 ----------
+function pDays(ymd) { const [y, m, d] = ymd.split('-').map(Number); return Math.round(Date.UTC(y, m - 1, d) / 86400000); }
+function pYmd(days) {
+    const dt = new Date(days * 86400000);
+    return dt.getUTCFullYear() + '-' + String(dt.getUTCMonth() + 1).padStart(2, '0') + '-' + String(dt.getUTCDate()).padStart(2, '0');
+}
+function pAge(birth, ymd) { return pDays(ymd) - pDays(birth) + 1; }
+function pSlash(ymd) { return ymd.replace(/-/g, '/'); }
+function localTodayYmd() {
+    const n = new Date();
+    return n.getFullYear() + '-' + String(n.getMonth() + 1).padStart(2, '0') + '-' + String(n.getDate()).padStart(2, '0');
+}
+function babyTodayAge() { return pAge(BIRTH_DATE, localTodayYmd()); }
+function childById(id) { return SIBLINGS.find(c => c.id === id); }
+
+// ---------- 写真サーバーとの通信 ----------
+async function photoApi(path, opts = {}) {
+    let res;
+    try {
+        res = await fetch(photoState.url + path, {
+            ...opts,
+            headers: { ...(opts.headers || {}), 'X-Photo-Key': photoState.key }
+        });
+    } catch (e) {
+        const err = new Error('写真サーバーに接続できません（URLや通信状態を確認してください）');
+        err.code = 'network';
+        throw err;
+    }
+    if (res.status === 401) { const err = new Error('合言葉が違います'); err.code = 'auth'; throw err; }
+    if (!res.ok) {
+        let msg = '';
+        try { msg = (await res.json()).error; } catch (e) {}
+        const err = new Error(msg || ('HTTP ' + res.status));
+        err.code = 'http';
+        throw err;
+    }
+    return res;
+}
+
+async function loadPhotoIndex() {
+    const res = await photoApi('/list');
+    const data = await res.json();
+    const children = data.children || {};
+    const json = JSON.stringify(children);
+    const changed = json !== photoState.indexJson;
+    photoState.index = children;
+    photoState.indexJson = json;
+    return changed;
+}
+
+function photoBlobUrl(child, date, id) {
+    const k = child + '/' + date + '/' + id;
+    if (!photoBlobCache.has(k)) {
+        const p = photoApi('/img?child=' + encodeURIComponent(child) + '&date=' + date + '&id=' + encodeURIComponent(id))
+            .then(r => r.blob())
+            .then(b => URL.createObjectURL(b))
+            .catch(e => { photoBlobCache.delete(k); throw e; });
+        photoBlobCache.set(k, p);
+    }
+    return photoBlobCache.get(k);
+}
+
+async function loadPhotoInto(img) {
+    try {
+        img.src = await photoBlobUrl(img.dataset.child, img.dataset.date, img.dataset.id);
+        img.classList.add('loaded');
+    } catch (e) {
+        img.removeAttribute('src');
+        img.alt = '読み込めませんでした';
+        img.classList.add('failed');
+    }
+}
+
+// ---------- 設定画面 ----------
+function showPhotoSetup(msg) {
+    document.getElementById('photo-main').style.display = 'none';
+    document.getElementById('photo-setup').style.display = 'block';
+    document.getElementById('photo-url-input').value = photoState.url;
+    document.getElementById('photo-key-input').value = '';
+    document.getElementById('photo-setup-msg').innerText = msg || '';
+}
+
+async function savePhotoSetup() {
+    const url = document.getElementById('photo-url-input').value.trim().replace(/\/+$/, '');
+    const key = document.getElementById('photo-key-input').value;
+    const msgEl = document.getElementById('photo-setup-msg');
+    if (!/^https:\/\/.+/.test(url)) { msgEl.innerText = 'URLは https:// から始まる形で入れてください'; return; }
+    if (!key) { msgEl.innerText = '合言葉を入れてください'; return; }
+    const prev = { url: photoState.url, key: photoState.key };
+    photoState.url = url;
+    photoState.key = key;
+    msgEl.style.color = '#7f8c8d';
+    msgEl.innerText = '確認中…';
+    try {
+        await loadPhotoIndex();
+        lsSet('milkPhotoUrl', url);
+        lsSet('milkPhotoKey', key);
+        msgEl.innerText = '';
+        msgEl.style.color = '';
+        photoState.rendered = false;
+        initPhotoTab();
+    } catch (e) {
+        photoState.url = prev.url;
+        photoState.key = prev.key;
+        msgEl.style.color = '';
+        msgEl.innerText = e.code === 'auth' ? '合言葉が違うようです' : e.message;
+    }
+}
+
+// ---------- タブを開いたとき ----------
+async function initPhotoTab() {
+    if (!photoState.url || !photoState.key) { showPhotoSetup(''); return; }
+    document.getElementById('photo-setup').style.display = 'none';
+    document.getElementById('photo-main').style.display = 'block';
+    const grid = document.getElementById('pc-grid');
+    if (photoState.index) {
+        renderPhotoPage();
+    } else {
+        grid.innerHTML = '<div class="loading">読み込み中…</div>';
+    }
+    try {
+        const changed = await loadPhotoIndex();
+        if (changed || !photoState.rendered) renderPhotoPage();
+    } catch (e) {
+        if (e.code === 'auth') { showPhotoSetup('合言葉が違うようです。入れ直してください。'); return; }
+        if (!photoState.index) {
+            grid.innerHTML = '<div class="pc-empty">' + esc(e.message) + '<br><br><button class="pc-btn" style="flex:none; padding:10px 20px;" onclick="initPhotoTab()">もう一度読み込む</button></div>';
+        }
+    }
+}
+
+// ---------- 比べる画面 ----------
+function photoDates(childId) { return Object.keys((photoState.index || {})[childId] || {}).sort(); }
+
+// 基準の生後日数に、いちばん近い撮影日（同じだけ離れていれば、小さい(前の)ほう）
+function nearestPhotoDate(child, refAge) {
+    let best = null, bestDiff = Infinity;
+    photoDates(child.id).forEach(d => {
+        const diff = Math.abs(pAge(child.birth, d) - refAge);
+        if (diff < bestDiff) { best = d; bestDiff = diff; }
+    });
+    return best;
+}
+
+function currentPhotoDate(child, refAge) {
+    const dates = photoDates(child.id);
+    if (!dates.length) return null;
+    const picked = photoState.picks[child.id];
+    if (picked && dates.indexOf(picked) !== -1) return picked;
+    return nearestPhotoDate(child, refAge);
+}
+
+function photoRefAge() {
+    return Math.max(1, babyTodayAge() + photoState.offset);
+}
+
+function renderPhotoPage() {
+    if (!photoState.index) return;
+    photoState.rendered = true;
+    const todayAge = babyTodayAge();
+    const ref = photoRefAge();
+    const off = ref - todayAge;
+    const label = off === 0 ? '今日' : off === -1 ? '昨日' : off === 1 ? '明日' : off < 0 ? (-off) + '日前' : off + '日後';
+    const calYmd = pYmd(pDays(BIRTH_DATE) + ref - 1);
+    document.getElementById('pc-ref-age').innerText = '生後' + ref + '日目';
+    document.getElementById('pc-ref-sub').innerText = label + '（' + pSlash(calYmd) + '）にあたる日の写真';
+    document.getElementById('pc-today').disabled = (off === 0);
+    document.getElementById('pc-cols').innerText = photoState.cols === 2 ? '1列で見る' : '2列で見る';
+
+    const grid = document.getElementById('pc-grid');
+    grid.className = 'pc-grid' + (photoState.cols === 2 ? ' cols2' : '');
+    grid.innerHTML = SIBLINGS.map(c => photoCardHtml(c, ref)).join('');
+    grid.querySelectorAll('img.pc-img').forEach(loadPhotoInto);
+}
+
+function photoCardHtml(child, ref) {
+    const head = '<span class="pc-dot" style="background:' + child.color + '"></span><b>' + esc(child.name) + '</b>';
+    const dates = photoDates(child.id);
+    if (!dates.length) {
+        return '<div class="pc-card"><div class="pc-head">' + head + '</div>' +
+            '<div class="pc-empty">まだ写真がありません<br>「＋写真を追加」から入れてね</div></div>';
+    }
+    const date = currentPhotoDate(child, ref);
+    const ids = photoState.index[child.id][date];
+    const age = pAge(child.birth, date);
+    const diff = age - ref;
+    let badgeCls = '', badgeText;
+    if (diff === 0) { badgeCls = ' exact'; badgeText = 'ぴったり同じ日'; }
+    else {
+        badgeText = (diff > 0 ? '+' : '−') + Math.abs(diff) + '日';
+        if (Math.abs(diff) > PHOTO_FAR_DAYS) { badgeCls = ' far'; badgeText = '離れています ' + badgeText; }
+    }
+    const idx = dates.indexOf(date);
+    const slides = ids.map((id, i) =>
+        '<div class="pc-slide"><img class="pc-img" alt="" data-child="' + child.id + '" data-date="' + date + '" data-id="' + esc(id) + '" onclick="openPhotoViewer(\'' + child.id + '\',' + i + ')"></div>'
+    ).join('');
+    const count = ids.length > 1 ? '<div class="pc-count" id="pcc-' + child.id + '">1/' + ids.length + '</div>' : '';
+    const options = dates.map(d =>
+        '<option value="' + d + '"' + (d === date ? ' selected' : '') + '>生後' + pAge(child.birth, d) + '日目・' + pSlash(d) + '（' + photoState.index[child.id][d].length + '枚）</option>'
+    ).join('');
+    return '<div class="pc-card">' +
+        '<div class="pc-head">' + head + '<span class="pc-badge' + badgeCls + '">' + badgeText + '</span></div>' +
+        '<div class="pc-sub">' + pSlash(date) + '・生後' + age + '日目</div>' +
+        '<div class="pc-photo"><div class="pc-scroll" onscroll="photoScrolled(this,\'' + child.id + '\')">' + slides + '</div>' + count + '</div>' +
+        '<div class="pc-ctrl">' +
+            '<button class="pc-step" onclick="photoStep(\'' + child.id + '\',-1)"' + (idx === 0 ? ' disabled' : '') + ' aria-label="前の撮影日">◀</button>' +
+            '<select onchange="photoPick(\'' + child.id + '\',this.value)" aria-label="撮影日を選ぶ">' + options + '</select>' +
+            '<button class="pc-step" onclick="photoStep(\'' + child.id + '\',1)"' + (idx === dates.length - 1 ? ' disabled' : '') + ' aria-label="次の撮影日">▶</button>' +
+        '</div></div>';
+}
+
+function photoScrolled(el, childId) {
+    const c = document.getElementById('pcc-' + childId);
+    if (!c) return;
+    const i = Math.round(el.scrollLeft / Math.max(1, el.clientWidth));
+    c.innerText = (i + 1) + '/' + el.children.length;
+}
+
+function photoShift(delta, reset) {
+    const min = 1 - babyTodayAge();
+    photoState.offset = reset ? 0 : Math.max(min, photoState.offset + delta);
+    photoState.picks = {};
+    renderPhotoPage();
+}
+
+function photoPick(childId, date) { photoState.picks[childId] = date; renderPhotoPage(); }
+
+function photoStep(childId, dir) {
+    const child = childById(childId);
+    const dates = photoDates(childId);
+    const i = dates.indexOf(currentPhotoDate(child, photoRefAge()));
+    const j = Math.max(0, Math.min(dates.length - 1, i + dir));
+    photoState.picks[childId] = dates[j];
+    renderPhotoPage();
+}
+
+function togglePhotoCols() {
+    photoState.cols = photoState.cols === 2 ? 1 : 2;
+    lsSet('milkPhotoCols', String(photoState.cols));
+    renderPhotoPage();
+}
+
+// ---------- 拡大表示 ----------
+function openPhotoViewer(childId, idx) {
+    const child = childById(childId);
+    const date = currentPhotoDate(child, photoRefAge());
+    photoState.viewer = { childId, date, idx };
+    document.getElementById('photo-viewer').classList.add('open');
+    renderPhotoViewer();
+}
+
+function renderPhotoViewer() {
+    const v = photoState.viewer;
+    if (!v) return;
+    const child = childById(v.childId);
+    const ids = photoState.index[v.childId][v.date];
+    const id = ids[v.idx];
+    document.getElementById('pv-cap').innerText =
+        child.name + '・' + pSlash(v.date) + '・生後' + pAge(child.birth, v.date) + '日目' + (ids.length > 1 ? '（' + (v.idx + 1) + '/' + ids.length + '）' : '');
+    document.getElementById('pv-prev').style.display = v.idx > 0 ? '' : 'none';
+    document.getElementById('pv-next').style.display = v.idx < ids.length - 1 ? '' : 'none';
+    const img = document.getElementById('pv-img');
+    img.removeAttribute('src');
+    photoBlobUrl(v.childId, v.date, id).then(u => {
+        const cur = photoState.viewer;
+        if (cur && cur.childId === v.childId && cur.date === v.date && cur.idx === v.idx) img.src = u;
+    }).catch(() => {});
+}
+
+function photoViewerStep(d) {
+    const v = photoState.viewer;
+    if (!v) return;
+    const n = photoState.index[v.childId][v.date].length;
+    v.idx = Math.max(0, Math.min(n - 1, v.idx + d));
+    renderPhotoViewer();
+}
+
+function closePhotoViewer() {
+    photoState.viewer = null;
+    document.getElementById('photo-viewer').classList.remove('open');
+    document.getElementById('pv-img').removeAttribute('src');
+}
+
+async function photoViewerDelete() {
+    const v = photoState.viewer;
+    if (!v) return;
+    const id = photoState.index[v.childId][v.date][v.idx];
+    if (!confirm('この写真を削除しますか？\n（元に戻せません）')) return;
+    try {
+        await photoApi('/photo?child=' + encodeURIComponent(v.childId) + '&date=' + v.date + '&id=' + encodeURIComponent(id), { method: 'DELETE' });
+        photoBlobCache.delete(v.childId + '/' + v.date + '/' + id);
+        await loadPhotoIndex();
+        closePhotoViewer();
+        renderPhotoPage();
+    } catch (e) {
+        alert('削除に失敗しました：' + e.message);
+    }
+}
+
+// 拡大表示を横になぞって前後の写真へ
+(function () {
+    let sx = null;
+    const stage = document.getElementById('pv-stage');
+    stage.addEventListener('touchstart', e => { sx = e.touches[0].clientX; }, { passive: true });
+    stage.addEventListener('touchend', e => {
+        if (sx === null) return;
+        const dx = e.changedTouches[0].clientX - sx;
+        sx = null;
+        if (Math.abs(dx) > 60) photoViewerStep(dx < 0 ? 1 : -1);
+    }, { passive: true });
+})();
+
+// ---------- 写真の追加 ----------
+// 写真ファイルから撮影日時(EXIF)を読む。読めなければnull
+async function readExifDate(file) {
+    try {
+        const buf = await file.slice(0, 262144).arrayBuffer();
+        const dv = new DataView(buf);
+        if (dv.getUint16(0) !== 0xFFD8) return null;
+        let off = 2;
+        while (off + 4 < dv.byteLength) {
+            const marker = dv.getUint16(off);
+            if ((marker & 0xFF00) !== 0xFF00) break;
+            const len = dv.getUint16(off + 2);
+            if (marker === 0xFFE1 && dv.getUint32(off + 4) === 0x45786966) return parseExifTiff(dv, off + 10);
+            off += 2 + len;
+        }
+    } catch (e) {}
+    return null;
+}
+
+function parseExifTiff(dv, base) {
+    const little = dv.getUint16(base) === 0x4949;
+    const u16 = o => dv.getUint16(base + o, little);
+    const u32 = o => dv.getUint32(base + o, little);
+    function readAscii(o, count) {
+        let s = '';
+        for (let i = 0; i < count - 1; i++) s += String.fromCharCode(dv.getUint8(base + o + i));
+        return s;
+    }
+    function readIfd(offset) {
+        const out = {};
+        const n = u16(offset);
+        for (let i = 0; i < n; i++) {
+            const e = offset + 2 + i * 12;
+            const tag = u16(e);
+            if (tag === 0x8769) out.exifPtr = u32(e + 8);
+            else if (tag === 0x9003 || tag === 0x9004 || tag === 0x0132) {
+                const count = u32(e + 4);
+                out[tag] = readAscii(count > 4 ? u32(e + 8) : e + 8, count);
+            }
+        }
+        return out;
+    }
+    const ifd0 = readIfd(u32(4));
+    const exif = ifd0.exifPtr ? readIfd(ifd0.exifPtr) : {};
+    const raw = exif[0x9003] || exif[0x9004] || ifd0[0x0132];
+    const m = raw && raw.match(/^(\d{4}):(\d{2}):(\d{2}) (\d{2}):(\d{2}):(\d{2})/);
+    if (!m || m[1] === '0000') return null;
+    return { date: m[1] + '-' + m[2] + '-' + m[3], time: m[4] + m[5] + m[6] };
+}
+
+// 長辺を縮めたJPEGにする（向きは自動で正しく直る）
+async function resizeToJpeg(file) {
+    const url = URL.createObjectURL(file);
+    try {
+        const img = new Image();
+        img.src = url;
+        await img.decode();
+        const scale = Math.min(1, PHOTO_MAX_EDGE / Math.max(img.naturalWidth, img.naturalHeight));
+        const w = Math.max(1, Math.round(img.naturalWidth * scale));
+        const h = Math.max(1, Math.round(img.naturalHeight * scale));
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(0, 0, w, h);
+        ctx.drawImage(img, 0, 0, w, h);
+        return await new Promise((res, rej) => canvas.toBlob(b => b ? res(b) : rej(new Error('画像の変換に失敗しました')), 'image/jpeg', PHOTO_JPEG_QUALITY));
+    } finally {
+        URL.revokeObjectURL(url);
+    }
+}
+
+function openPhotoUpload() {
+    document.getElementById('photo-upload').classList.add('open');
+    document.getElementById('pu-status').innerText = '';
+    renderUploadSheet();
+}
+
+function closePhotoUpload() {
+    if (photoState.uploading && !confirm('アップロード中です。閉じても続きます。閉じますか？')) return;
+    document.getElementById('photo-upload').classList.remove('open');
+    if (!photoState.uploading) {
+        photoState.uploadItems.forEach(it => URL.revokeObjectURL(it.preview));
+        photoState.uploadItems = [];
+    }
+}
+
+function puChild(id) { photoState.uploadChild = id; renderUploadSheet(); }
+
+async function photoFilesChosen(input) {
+    const files = Array.from(input.files || []).filter(f => !f.type || f.type.indexOf('image/') === 0);
+    input.value = '';
+    for (const f of files) {
+        const item = { file: f, preview: URL.createObjectURL(f), date: '', time: '000000', state: '', exifMissing: false, err: '' };
+        photoState.uploadItems.push(item);
+        const ex = await readExifDate(f);
+        if (ex) { item.date = ex.date; item.time = ex.time; } else { item.exifMissing = true; }
+        renderUploadSheet();
+    }
+}
+
+function puDate(i, value) {
+    const it = photoState.uploadItems[i];
+    if (!it) return;
+    it.date = value;
+    it.exifMissing = false;
+    renderUploadSheet(true);
+}
+
+function puRemove(i) {
+    const it = photoState.uploadItems[i];
+    if (!it) return;
+    URL.revokeObjectURL(it.preview);
+    photoState.uploadItems.splice(i, 1);
+    renderUploadSheet();
+}
+
+function uploadItemProblem(it, child) {
+    if (!it.date) return '撮影日を入れてください';
+    if (child && pAge(child.birth, it.date) < 1) return '誕生日より前の日付です';
+    return '';
+}
+
+// keepFocus=trueのときは、日付入力中に入力欄が作り直されないよう、リストはそのままにして下のボタンだけ更新する
+function renderUploadSheet(keepFocus) {
+    const child = childById(photoState.uploadChild);
+    document.getElementById('pu-children').innerHTML = SIBLINGS.map(c =>
+        '<button class="pu-child' + (c.id === photoState.uploadChild ? ' sel' : '') + '" onclick="puChild(\'' + c.id + '\')">' + esc(c.name) + '</button>'
+    ).join('');
+
+    const items = photoState.uploadItems;
+    if (!keepFocus) {
+        document.getElementById('pu-list').innerHTML = items.map((it, i) => {
+            const problem = uploadItemProblem(it, child);
+            let info;
+            if (problem) info = '<div class="pu-info bad">' + problem + '</div>';
+            else if (child) info = '<div class="pu-info">生後' + pAge(child.birth, it.date) + '日目' + '</div>';
+            else info = '<div class="pu-info">先に「だれの写真？」を選んでください</div>';
+            if (it.exifMissing && !it.date) info += '<div class="pu-info">撮影日が読み取れませんでした</div>';
+            if (it.state === 'error') info += '<div class="pu-info bad">失敗：' + esc(it.err) + '</div>';
+            const stateIcon = it.state === 'done' ? '✅' : it.state === 'up' ? '⏳' : it.state === 'error' ? '⚠️' : '';
+            return '<div class="pu-row"><img class="pu-thumb" src="' + it.preview + '" alt="">' +
+                '<div class="pu-mid"><input type="date" value="' + it.date + '" onchange="puDate(' + i + ',this.value)"' + (photoState.uploading ? ' disabled' : '') + '>' + info + '</div>' +
+                (stateIcon ? '<div class="pu-state">' + stateIcon + '</div>' : '') +
+                '<button class="pu-x" onclick="puRemove(' + i + ')"' + (photoState.uploading ? ' disabled' : '') + ' aria-label="外す">✕</button></div>';
+        }).join('');
+    }
+    const ready = !!child && items.length > 0 && !photoState.uploading && items.every(it => !uploadItemProblem(it, child));
+    const go = document.getElementById('pu-go');
+    go.disabled = !ready;
+    go.innerText = items.length > 0 ? 'この' + items.length + '枚をアップロード' : 'アップロード';
+}
+
+async function photoUploadAll() {
+    const child = childById(photoState.uploadChild);
+    if (!child || photoState.uploading) return;
+    const statusEl = document.getElementById('pu-status');
+    photoState.uploading = true;
+    renderUploadSheet();
+    const targets = photoState.uploadItems.filter(it => it.state !== 'done');
+    let ok = 0, ng = 0, lastDate = '';
+    for (let n = 0; n < targets.length; n++) {
+        const it = targets[n];
+        it.state = 'up';
+        it.err = '';
+        statusEl.innerText = 'アップロード中… ' + (n + 1) + '/' + targets.length;
+        renderUploadSheet();
+        try {
+            const blob = await resizeToJpeg(it.file);
+            const id = (it.time || '000000') + '-' + Math.random().toString(36).slice(2, 6);
+            await photoApi('/upload?child=' + encodeURIComponent(child.id) + '&date=' + it.date + '&id=' + encodeURIComponent(id), {
+                method: 'PUT', headers: { 'Content-Type': 'image/jpeg' }, body: blob
+            });
+            it.state = 'done';
+            ok++;
+            lastDate = it.date;
+        } catch (e) {
+            it.state = 'error';
+            it.err = e.message;
+            ng++;
+            if (e.code === 'auth') break;
+        }
+    }
+    photoState.uploading = false;
+    try { await loadPhotoIndex(); } catch (e) {}
+    photoState.uploadItems = photoState.uploadItems.filter(it => {
+        if (it.state === 'done') { URL.revokeObjectURL(it.preview); return false; }
+        return true;
+    });
+    if (lastDate) photoState.picks[child.id] = lastDate;
+    statusEl.innerText = ok + '枚を追加しました' + (ng ? '（' + ng + '枚は失敗。下に理由があります）' : '');
+    renderUploadSheet();
+    renderPhotoPage();
 }
 </script>
 </body>
