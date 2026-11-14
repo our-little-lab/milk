@@ -6973,15 +6973,6 @@
   },
   {
     "type": "milk",
-    "id": "mwh2hmer_lky4d3",
-    "date": "2026/11/15",
-    "time": "08:59",
-    "timestamp": "2026-11-14T23:59:00.000Z",
-    "amount": 200,
-    "memo": ""
-  },
-  {
-    "type": "milk",
     "id": "mwh2hrn7_b9fgcd",
     "date": "2026/11/15",
     "time": "08:59",
