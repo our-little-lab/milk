@@ -338,11 +338,11 @@
             <div class="pc-note">写真は非公開の保管場所に入っています。写真用Workerの「URL」と「合言葉」を、この端末に1回だけ登録します。</div>
             <div class="form-group">
                 <label for="photo-url-input">写真用WorkerのURL</label>
-                <input type="url" id="photo-url-input" placeholder="https://〜.workers.dev" autocapitalize="off" autocorrect="off">
+                <input type="url" id="photo-url-input" placeholder="https://〜.workers.dev" autocapitalize="off" autocorrect="off" name="username" autocomplete="username" oninput="photoUrlTyped(this)">
             </div>
             <div class="form-group">
                 <label for="photo-key-input">合言葉</label>
-                <input type="password" id="photo-key-input" autocapitalize="off" autocorrect="off">
+                <input type="password" id="photo-key-input" autocapitalize="off" autocorrect="off" name="password" autocomplete="current-password">
             </div>
             <button class="btn" onclick="savePhotoSetup()">登録して開く</button>
             <div class="pc-err" id="photo-setup-msg"></div>
@@ -591,6 +591,7 @@
         loadHistoryData(); // ← 追加：ページ読み込み時に履歴・グラフも先読みしておく
         updateBabyAge(); // ← 追加：ページ読み込み時に1回表示
         loadLineConfig(true); // ← 追加：経過時間の文字色のしきい値(notifyMinutes)を、通知タブを開かなくても最初から正しく反映させるため(silent=trueで失敗時はalertしない)
+        prefetchPhotoIndex(); // ← 追加：写真一覧を裏で先読みしておく(写真タブを開いたときに待たないため)
     
         document.getElementById('record-time').addEventListener('input', () => {
             recordTimeManuallyChanged = true;
@@ -612,7 +613,10 @@
 
 document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') {
-        switchTab('record'); // ← 追加：他アプリ等から戻ってきたら、常に「記録入力」タブを表示する
+        // 写真の設定画面を開いている間は「記録」タブへ戻さない(合言葉を見に行って戻る往復を成立させるため)
+        const photoSetupOpen = document.getElementById('page-photo').classList.contains('active')
+            && document.getElementById('photo-setup').style.display !== 'none';
+        if (!photoSetupOpen) switchTab('record'); // ← 追加：他アプリ等から戻ってきたら、常に「記録入力」タブを表示する
         updateElapsedTime();
         updateBabyAge(); // ← 追加
         if (!recordTimeManuallyChanged) {
@@ -1860,6 +1864,7 @@ const photoState = {
     key: lsGet('milkPhotoKey'),
     index: null,        // { 子どもID: { 'yyyy-mm-dd': [写真ID, ...] } }
     indexJson: '',
+    indexPromise: null, // 一覧の読み込み中(起動時の先読みと共用する)
     rendered: false,
     offset: 0,          // 基準の生後日数を、今日からずらした日数
     mode: 'age',        // 'age'=同じ生後日数で比べる / 'date'=同じ年月日で比べる
@@ -1929,6 +1934,25 @@ async function loadPhotoIndex() {
     return changed;
 }
 
+// 一覧の読み込みを一本化する(読み込み中なら、進行中のものをそのまま返す)
+function startPhotoIndexLoad() {
+    if (photoState.indexPromise) return photoState.indexPromise;
+    const p = loadPhotoIndex();
+    photoState.indexPromise = p;
+    const clear = () => { if (photoState.indexPromise === p) photoState.indexPromise = null; };
+    p.then(clear, clear);
+    return p;
+}
+
+// 起動直後から写真一覧を裏で読み始める(写真タブを開いたときの待ち時間をなくすため)。
+// 読みに行くのは写真の「名前の一覧」だけで、画像そのものは今まで通り、
+// 見る日付の分だけ都度読み込む。失敗した場合は、写真タブを開いたときに改めて扱う
+function prefetchPhotoIndex() {
+    if (!photoState.url || !photoState.key) return;
+    if (photoState.index || photoState.indexPromise) return;
+    startPhotoIndexLoad().catch(() => {});
+}
+
 function photoBlobUrl(child, date, id) {
     const k = child + '/' + date + '/' + id;
     if (!photoBlobCache.has(k)) {
@@ -1956,9 +1980,16 @@ async function loadPhotoInto(img) {
 function showPhotoSetup(msg) {
     document.getElementById('photo-main').style.display = 'none';
     document.getElementById('photo-setup').style.display = 'block';
-    document.getElementById('photo-url-input').value = photoState.url;
+    // 入力途中のURL(下書き)があれば、それを優先して戻す
+    document.getElementById('photo-url-input').value = lsGet('milkPhotoUrlDraft') || photoState.url;
     document.getElementById('photo-key-input').value = '';
     document.getElementById('photo-setup-msg').innerText = msg || '';
+}
+
+// URLは打った時点で下書きとして端末に残す(合言葉を見に行って戻ってきても消えないように)。
+// 正式な設定として切り替わるのは、今まで通り「登録して開く」で接続確認が通ってから
+function photoUrlTyped(el) {
+    lsSet('milkPhotoUrlDraft', el.value);
 }
 
 async function savePhotoSetup() {
@@ -1976,6 +2007,7 @@ async function savePhotoSetup() {
         await loadPhotoIndex();
         lsSet('milkPhotoUrl', url);
         lsSet('milkPhotoKey', key);
+        lsSet('milkPhotoUrlDraft', '');
         msgEl.innerText = '';
         msgEl.style.color = '';
         photoState.rendered = false;
@@ -2000,7 +2032,12 @@ async function initPhotoTab() {
         grid.innerHTML = '<div class="loading">読み込み中…</div>';
     }
     try {
-        const changed = await loadPhotoIndex();
+        let changed = false;
+        if (photoState.indexPromise) {
+            await photoState.indexPromise; // 起動時の先読みが進行中なら、それを待って使う(取り直しはしない)
+        } else {
+            changed = await loadPhotoIndex();
+        }
         if (changed || !photoState.rendered) renderPhotoPage();
     } catch (e) {
         if (e.code === 'auth') { showPhotoSetup('合言葉が違うようです。入れ直してください。'); return; }
