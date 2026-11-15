@@ -355,6 +355,14 @@
                     <div class="pc-ref-sub" id="pc-ref-hint" style="font-size:0.72rem; opacity:0.8;"></div>
                 </div>
                 <div class="pc-btnrow">
+                    <button class="pc-btn" id="pc-mode-age" onclick="photoSetMode('age')">🎂 生後日数で比べる</button>
+                    <button class="pc-btn" id="pc-mode-date" onclick="photoSetMode('date')">📅 日付で比べる</button>
+                </div>
+                <div class="pc-btnrow" id="pc-yearrow" style="display:none;">
+                    <button class="pc-btn" onclick="photoShiftYear(-1)">◀ 前の年</button>
+                    <button class="pc-btn" onclick="photoShiftYear(1)">次の年 ▶</button>
+                </div>
+                <div class="pc-btnrow">
                     <button class="pc-btn" onclick="photoShift(-7)">−7日</button>
                     <button class="pc-btn" onclick="photoShift(-1)">◀ 前日</button>
                     <button class="pc-btn" onclick="photoShift(1)">翌日 ▶</button>
@@ -2140,6 +2148,9 @@ function renderPhotoPage() {
         document.getElementById('pc-today').disabled = (off === 0);
     }
     document.getElementById('pc-cols').innerText = photoState.cols === 2 ? '1列で見る' : '2列で見る';
+    document.getElementById('pc-mode-age').className = 'pc-btn' + (photoState.mode === 'age' ? ' primary' : '');
+    document.getElementById('pc-mode-date').className = 'pc-btn' + (photoState.mode === 'date' ? ' primary' : '');
+    document.getElementById('pc-yearrow').style.display = photoState.mode === 'date' ? '' : 'none';
 
     const grid = document.getElementById('pc-grid');
     grid.className = 'pc-grid' + (photoState.cols === 2 ? ' cols2' : '');
@@ -2192,6 +2203,33 @@ function photoScrolled(el, childId) {
     if (!c) return;
     const i = Math.round(el.scrollLeft / Math.max(1, el.clientWidth));
     c.innerText = (i + 1) + '/' + el.children.length;
+}
+
+// 比べ方を切り替える（生後日数 ⇔ 日付）。日付モードへは、いま見ている基準日のまま移る
+function photoSetMode(mode) {
+    if (mode === 'date') {
+        if (photoState.mode !== 'date') {
+            photoState.refDate = pYmd(pDays(BIRTH_DATE) + photoRefAge() - 1);
+            photoState.mode = 'date';
+        }
+    } else {
+        photoState.mode = 'age';
+        photoState.offset = 0;
+    }
+    photoState.picks = {};
+    renderPhotoPage();
+}
+
+// 日付モードで、月日はそのままに年だけ前後する（同じ日付の違う年を見るため）
+function photoShiftYear(delta) {
+    if (photoState.mode !== 'date' || !photoState.refDate) return;
+    const parts = photoState.refDate.split('-').map(Number);
+    const y = parts[0] + delta, m = parts[1], d = parts[2];
+    let ymd = y + '-' + String(m).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+    if (pYmd(pDays(ymd)) !== ymd) ymd = y + '-' + String(m).padStart(2, '0') + '-28'; // 2月29日→2月28日
+    photoState.refDate = ymd;
+    photoState.picks = {};
+    renderPhotoPage();
 }
 
 function photoShift(delta, reset) {
