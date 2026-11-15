@@ -507,7 +507,7 @@
 </div>
 <!-- ↑ 追加ここまで -->
 
-<!-- 登録完了トースト：OKボタンなし、2秒後に自動で閉じる -->
+<!-- 登録完了トースト：写真が出たときはOKボタンでだけ閉じる。写真なしは2秒後に自動で閉じる -->
 <div class="modal" id="success-toast" onclick="closeSuccessToast()">
     <div class="modal-content" style="text-align:center;">
         <div style="font-size:2rem; margin-bottom:8px;">✅</div>
@@ -517,6 +517,7 @@
             <img id="success-toast-img" alt="" style="width:100%; max-height:42vh; object-fit:contain; border-radius:12px; background:#eef3f7; display:block;">
             <div style="font-size:0.8rem; color:#7f8c8d; margin-top:8px;">だれかな？ 写真タブでこたえあわせ 📷</div>
         </div>
+        <button class="btn" id="success-toast-ok" style="display:none; margin-top:14px; width:100%;" onclick="event.stopPropagation(); closeSuccessToast(true);">OK</button>
     </div>
 </div>
 
@@ -677,11 +678,14 @@ document.addEventListener('visibilitychange', () => {
     // ← 変更：用意できていれば、上の子たちの「同じ生後日数」の写真を1枚つけて表示する
     let successToastTimer = null;
     let successToastOnClosed = null;
-    function closeSuccessToast() {
+    let successToastNeedOk = false; // 写真が出ているときは true(OKボタンでだけ閉じる)
+    function closeSuccessToast(force) {
+        if (successToastNeedOk && !force) return; // 写真表示中は、背景タップや自動では閉じない
         const modal = document.getElementById('success-toast');
         if (!modal || modal.style.display === 'none') return;
         if (successToastTimer) { clearTimeout(successToastTimer); successToastTimer = null; }
         modal.style.display = 'none';
+        successToastNeedOk = false;
         const cb = successToastOnClosed;
         successToastOnClosed = null;
         if (cb) cb();
@@ -702,8 +706,11 @@ document.addEventListener('visibilitychange', () => {
         modal.style.display = 'flex';
         successToastOnClosed = onClosed || null;
 
+        // 写真が出たときは、OKを押すまで閉じない(自動でも、背景タップでも閉じない)
+        successToastNeedOk = !!photoUrl;
+        document.getElementById('success-toast-ok').style.display = photoUrl ? 'block' : 'none';
         if (successToastTimer) clearTimeout(successToastTimer);
-        successToastTimer = setTimeout(closeSuccessToast, photoUrl ? 4000 : 2000);
+        successToastTimer = photoUrl ? null : setTimeout(closeSuccessToast, 2000);
     }
 
     // 入力フォームの時刻を現在時刻（ローカル）にセット
