@@ -518,6 +518,7 @@
             <div style="font-size:0.8rem; color:#7f8c8d; margin-top:8px;">だれかな？ 写真タブでこたえあわせ 📷</div>
         </div>
         <button class="btn" id="success-toast-ok" style="display:none; margin-top:14px; width:100%;" onclick="event.stopPropagation(); closeSuccessToast(true);">OK</button>
+        <button class="btn" id="success-toast-goto" style="display:none; margin-top:8px; width:100%; background:#5b8dd9;" onclick="event.stopPropagation(); toastGotoPhoto();">📅 この日付の写真を見る</button>
     </div>
 </div>
 
@@ -679,6 +680,27 @@ document.addEventListener('visibilitychange', () => {
     let successToastTimer = null;
     let successToastOnClosed = null;
     let successToastNeedOk = false; // 写真が出ているときは true(OKボタンでだけ閉じる)
+    let successToastPhoto = null;   // 表示中のごほうび写真({kind, child, date, ...})
+
+    // ごほうび写真から写真タブへ：その写真が選ばれた条件(日付／生後日数)で開く
+    function toastGotoPhoto() {
+        const tp = successToastPhoto;
+        successToastPhoto = null;
+        closeSuccessToast(true);
+        if (!tp) return;
+        if (tp.kind === 'date') {
+            photoState.mode = 'date';
+            photoState.refDate = tp.date;
+        } else {
+            const child = childById(tp.child);
+            if (!child) return;
+            photoState.mode = 'age';
+            photoState.offset = pAge(child.birth, tp.date) - babyTodayAge();
+        }
+        photoState.picks = {};
+        photoState.picks[tp.child] = tp.date; // 出ていた写真の日付を、その子の表示に固定する
+        switchTab('photo');
+    }
     function closeSuccessToast(force) {
         if (successToastNeedOk && !force) return; // 写真表示中は、背景タップや自動では閉じない
         const modal = document.getElementById('success-toast');
@@ -699,9 +721,16 @@ document.addEventListener('visibilitychange', () => {
         // 写真(用意できていれば)。名前や日付は出さない
         const photoBox = document.getElementById('success-toast-photo');
         const photoImg = document.getElementById('success-toast-img');
-        const photoUrl = (typeof takeToastPhoto === 'function') ? takeToastPhoto() : null;
+        const tp = (typeof takeToastPhoto === 'function') ? takeToastPhoto() : null;
+        const photoUrl = tp ? tp.url : null;
+        successToastPhoto = tp;
         if (photoUrl) { photoImg.src = photoUrl; photoBox.style.display = 'block'; }
         else { photoImg.removeAttribute('src'); photoBox.style.display = 'none'; }
+        // 「見る」ボタン：日付で選ばれた写真なら日付、生後日数なら生後日数のほうへ案内する
+        const gotoBtn = document.getElementById('success-toast-goto');
+        if (tp && tp.kind === 'date') { gotoBtn.innerText = '📅 この日付の写真を見る'; gotoBtn.style.display = 'block'; }
+        else if (tp) { gotoBtn.innerText = '🎂 同じ生後日数の写真を見る'; gotoBtn.style.display = 'block'; }
+        else { gotoBtn.style.display = 'none'; }
 
         modal.style.display = 'flex';
         successToastOnClosed = onClosed || null;
@@ -3033,22 +3062,37 @@ async function prepareToastPhoto() {
     try {
         try { await loadPhotoIndex(); } catch (e) { if (!photoState.index) throw e; }
         const age = babyTodayAge();
-        // 子どもごとの候補（今日の生後日数にいちばん近い撮影日の写真）
-        const all = [];
+        const today = localTodayYmd();
+        const mmdd = today.slice(5); // 'mm-dd'
+        // 候補その1：今日の生後日数にいちばん近い撮影日の写真（今まで通り）
+        const ageAll = [];
+        // 候補その2：今日と同じ月日の撮影日の写真（年は問わない）
+        const dateAll = [];
         SIBLINGS.forEach(c => {
             const d = nearestPhotoDate(c, age);
-            if (!d) return;
-            const ids = photoState.index[c.id][d].map(id => ({ child: c.id, date: d, id, key: c.id + '/' + d + '/' + id }));
-            if (ids.length) all.push(ids);
+            if (d) {
+                const ids = photoState.index[c.id][d].map(id => ({ child: c.id, date: d, id, key: c.id + '/' + d + '/' + id }));
+                if (ids.length) ageAll.push(ids);
+            }
+            photoDates(c.id).filter(d2 => d2.slice(5) === mmdd).forEach(d2 => {
+                const ids = photoState.index[c.id][d2].map(id => ({ child: c.id, date: d2, id, key: c.id + '/' + d2 + '/' + id }));
+                if (ids.length) dateAll.push(ids);
+            });
         });
+        // どちらの種類にするかはランダム（候補がある種類の中から選ぶ）
+        const kinds = [];
+        if (ageAll.length) kinds.push({ kind: 'age', all: ageAll });
+        if (dateAll.length) kinds.push({ kind: 'date', all: dateAll });
+        if (!kinds.length) { toastPhoto.ready = null; return; }
+        const chosen = kinds[Math.floor(Math.random() * kinds.length)];
+        const all = chosen.all;
         // 直前に出した写真は避ける（ほかに選べる写真が1枚もないときだけ、同じ写真もあり）
         let pool = all.map(ids => ids.filter(x => x.key !== toastPhoto.lastKey)).filter(ids => ids.length);
         if (!pool.length) pool = all;
-        if (!pool.length) { toastPhoto.ready = null; return; }
         const list = pool[Math.floor(Math.random() * pool.length)];
         const pick = list[Math.floor(Math.random() * list.length)];
         const url = await photoBlobUrl(pick.child, pick.date, pick.id);
-        toastPhoto.ready = { url, key: pick.key, ymd: localTodayYmd() };
+        toastPhoto.ready = { url, key: pick.key, ymd: today, kind: chosen.kind, child: pick.child, date: pick.date };
     } catch (e) {
         toastPhoto.ready = null;
     } finally {
@@ -3063,7 +3107,7 @@ function takeToastPhoto() {
     setTimeout(prepareToastPhoto, 500);
     if (!r || r.ymd !== localTodayYmd()) return null; // 日付をまたいで古くなっていたら使わない
     toastPhoto.lastKey = r.key;
-    return r.url;
+    return r;
 }
 
 window.addEventListener('load', () => { setTimeout(prepareToastPhoto, 1500); });
