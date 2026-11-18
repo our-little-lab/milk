@@ -7078,5 +7078,14 @@
     "timestamp": "2026-11-17T17:56:00.000Z",
     "amount": 200,
     "memo": ""
+  },
+  {
+    "type": "milk",
+    "id": "mwlftvea_5p93p8",
+    "date": "2026/11/18",
+    "time": "08:50",
+    "timestamp": "2026-11-17T23:50:00.000Z",
+    "amount": 200,
+    "memo": ""
   }
 ]
