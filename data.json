@@ -7274,5 +7274,14 @@
     "date": "2026/11/22",
     "content": "哺乳瓶を自分で持てるようになってきている。",
     "transcribed": false
+  },
+  {
+    "type": "milk",
+    "id": "mwqn5rp3_p48407",
+    "date": "2026/11/22",
+    "time": "01:47",
+    "timestamp": "2026-11-21T16:47:00.000Z",
+    "amount": 220,
+    "memo": ""
   }
 ]
