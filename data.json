@@ -7267,5 +7267,12 @@
     "timestamp": "2026-11-21T13:21:00.000Z",
     "amount": 200,
     "memo": ""
+  },
+  {
+    "type": "memo",
+    "id": "memo_1795278367906_m0bwg8",
+    "date": "2026/11/22",
+    "content": "哺乳瓶を自分で持てるようになってきている。",
+    "transcribed": false
   }
 ]
