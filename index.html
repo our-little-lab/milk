@@ -522,6 +522,7 @@
         <div id="success-toast-message" style="font-weight:bold; font-size:1.05rem;"></div>
         <!-- 登録のごほうび：上の子たちの「同じ生後日数」の写真を1枚（だれかは見せない） -->
         <div id="success-toast-photo" style="display:none; margin-top:14px;">
+            <div id="success-toast-kind" style="display:inline-block; font-size:0.82rem; font-weight:bold; color:#fff; background:#5b8dd9; border-radius:999px; padding:4px 14px; margin-bottom:8px;"></div>
             <img id="success-toast-img" alt="" style="width:100%; max-height:42vh; object-fit:contain; border-radius:12px; background:#eef3f7; display:block;">
             <div style="font-size:0.8rem; color:#7f8c8d; margin-top:8px;">だれかな？ 写真タブでこたえあわせ 📷</div>
         </div>
@@ -734,6 +735,17 @@ document.addEventListener('visibilitychange', () => {
         successToastPhoto = tp;
         if (photoUrl) { photoImg.src = photoUrl; photoBox.style.display = 'block'; }
         else { photoImg.removeAttribute('src'); photoBox.style.display = 'none'; }
+        // 種別バッジ：どちらの条件で選ばれた写真かをはっきり示す
+        const kindEl = document.getElementById('success-toast-kind');
+        if (tp && tp.kind === 'date') {
+            const md = tp.date.split('-');
+            kindEl.innerText = '📅 日付が同じ写真（' + Number(md[1]) + '月' + Number(md[2]) + '日）';
+            kindEl.style.background = '#5b8dd9';
+        } else if (tp) {
+            const ch = (typeof childById === 'function') ? childById(tp.child) : null;
+            kindEl.innerText = '🎂 生後日数が同じ写真' + (ch ? '（生後' + pAge(ch.birth, tp.date) + '日目）' : '');
+            kindEl.style.background = '#e67e22';
+        }
         // 「見る」ボタン：日付で選ばれた写真なら日付、生後日数なら生後日数のほうへ案内する
         const gotoBtn = document.getElementById('success-toast-goto');
         if (tp && tp.kind === 'date') { gotoBtn.innerText = '📅 この日付の写真を見る'; gotoBtn.style.display = 'block'; }
@@ -2120,8 +2132,32 @@ function currentPhotoDate(child, refAge) {
     if (!dates.length) return null;
     const picked = photoState.picks[child.id];
     if (picked && dates.indexOf(picked) !== -1) return picked;
-    if (photoState.mode === 'date' && photoState.refDate) return nearestPhotoDateByCalendar(child, photoState.refDate);
+    if (photoState.mode === 'date' && photoState.refDate) return exactMonthDayDate(child, photoState.refDate);
     return nearestPhotoDate(child, refAge);
+}
+
+// 日付モード用：月日が完全に一致する日だけを返す（近い日では代替しない）。
+// 複数の年にあれば、基準の年にいちばん近い年を選ぶ。なければ null
+function exactMonthDayDate(child, refYmd) {
+    const mmdd = refYmd.slice(5);
+    const refYear = Number(refYmd.slice(0, 4));
+    let best = null, bestDiff = Infinity;
+    photoDates(child.id).forEach(d => {
+        if (d.slice(5) !== mmdd) return;
+        const diff = Math.abs(Number(d.slice(0, 4)) - refYear);
+        if (diff < bestDiff) { best = d; bestDiff = diff; }
+    });
+    return best;
+}
+
+// カードで選べる日付の一覧（日付モードでは、月日が一致する日だけに絞る）
+function cardDates(child) {
+    const dates = photoDates(child.id);
+    if (photoState.mode === 'date' && photoState.refDate) {
+        const mmdd = photoState.refDate.slice(5);
+        return dates.filter(d => d.slice(5) === mmdd);
+    }
+    return dates;
 }
 
 function photoRefAge() {
@@ -2138,7 +2174,7 @@ function renderPhotoPage() {
     const calYmd = pYmd(pDays(BIRTH_DATE) + ref - 1);
     if (photoState.mode === 'date') {
         document.getElementById('pc-ref-age').innerText = pSlash(photoState.refDate);
-        document.getElementById('pc-ref-sub').innerText = '同じ年月日の写真を並べています';
+        document.getElementById('pc-ref-sub').innerText = '月日が同じ写真だけを並べています';
         document.getElementById('pc-ref-hint').innerText = '上の日付をタップすると、年月日を指定できます';
         document.getElementById('pc-today').disabled = false;
     } else {
@@ -2160,20 +2196,32 @@ function renderPhotoPage() {
 
 function photoCardHtml(child, ref) {
     const head = '<span class="pc-dot" style="background:' + child.color + '"></span><b>' + esc(child.name) + '</b>';
-    const dates = photoDates(child.id);
-    if (!dates.length) {
+    const allDates = photoDates(child.id);
+    if (!allDates.length) {
         return '<div class="pc-card"><div class="pc-head">' + head + '</div>' +
             '<div class="pc-empty">まだ写真がありません<br>「＋写真を追加」から入れてね</div></div>';
     }
     const date = currentPhotoDate(child, ref);
+    if (!date) {
+        // 日付モードで、その月日の写真が1枚もない子（近い日では代替しない）
+        const md = photoState.refDate.split('-');
+        return '<div class="pc-card"><div class="pc-head">' + head + '</div>' +
+            '<div class="pc-empty">' + Number(md[1]) + '月' + Number(md[2]) + '日の写真はありません</div></div>';
+    }
+    const dates = cardDates(child);
     const ids = photoState.index[child.id][date];
     const age = pAge(child.birth, date);
-    const diff = photoState.mode === 'date' ? pDays(date) - pDays(photoState.refDate) : age - ref;
     let badgeCls = '', badgeText;
-    if (diff === 0) { badgeCls = ' exact'; badgeText = 'ぴったり同じ日'; }
-    else {
-        badgeText = (diff > 0 ? '+' : '−') + Math.abs(diff) + '日';
-        if (Math.abs(diff) > PHOTO_FAR_DAYS) { badgeCls = ' far'; badgeText = '離れています ' + badgeText; }
+    if (photoState.mode === 'date') {
+        badgeCls = ' exact';
+        badgeText = date === photoState.refDate ? 'ぴったり同じ日' : '同じ月日';
+    } else {
+        const diff = age - ref;
+        if (diff === 0) { badgeCls = ' exact'; badgeText = 'ぴったり同じ日'; }
+        else {
+            badgeText = (diff > 0 ? '+' : '−') + Math.abs(diff) + '日';
+            if (Math.abs(diff) > PHOTO_FAR_DAYS) { badgeCls = ' far'; badgeText = '離れています ' + badgeText; }
+        }
     }
     const idx = dates.indexOf(date);
     const slides = ids.map((id, i) =>
@@ -2246,7 +2294,7 @@ function photoShift(delta, reset) {
     renderPhotoPage();
 }
 
-// この子の今の写真と「同じ年月日」に、ほかの子の写真も合わせる（なければ、いちばん近い日付）
+// この子の今の写真と「同じ月日」に、ほかの子の写真も合わせる（月日が一致する写真がない子は「ありません」と表示）
 function photoAlignDate(childId) {
     const child = childById(childId);
     const date = currentPhotoDate(child, photoRefAge());
@@ -2305,7 +2353,7 @@ function photoPick(childId, date) { photoState.picks[childId] = date; renderPhot
 
 function photoStep(childId, dir) {
     const child = childById(childId);
-    const dates = photoDates(childId);
+    const dates = cardDates(child);
     const i = dates.indexOf(currentPhotoDate(child, photoRefAge()));
     const j = Math.max(0, Math.min(dates.length - 1, i + dir));
     photoState.picks[childId] = dates[j];
