@@ -7308,5 +7308,14 @@
     "date": "2026/11/22",
     "content": "一瞬座る事ができる",
     "transcribed": false
+  },
+  {
+    "type": "milk",
+    "id": "mwrmrw4a_vqflwq",
+    "date": "2026/11/22",
+    "time": "18:04",
+    "timestamp": "2026-11-22T09:04:00.000Z",
+    "amount": 220,
+    "memo": ""
   }
 ]
