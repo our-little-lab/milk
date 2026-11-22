@@ -7301,5 +7301,12 @@
     "timestamp": "2026-11-22T03:50:00.000Z",
     "amount": 200,
     "memo": ""
+  },
+  {
+    "type": "memo",
+    "id": "memo_1795332845121_90erug",
+    "date": "2026/11/22",
+    "content": "一瞬座る事ができる",
+    "transcribed": false
   }
 ]
