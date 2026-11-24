@@ -7398,5 +7398,14 @@
     "timestamp": "2026-11-24T05:37:00.000Z",
     "amount": 200,
     "memo": ""
+  },
+  {
+    "type": "milk",
+    "id": "mwukfunc_7uxxxm",
+    "date": "2026/11/24",
+    "time": "19:42",
+    "timestamp": "2026-11-24T10:42:00.000Z",
+    "amount": 200,
+    "memo": ""
   }
 ]
